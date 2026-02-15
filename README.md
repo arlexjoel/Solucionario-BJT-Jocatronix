@@ -1,3 +1,4 @@
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 # ⚡ Solucionario de Transistores BJT - @jocatronix
 
 ¡Bienvenido al repositorio oficial del curso de **Transistores BJT**! Este espacio ha sido diseñado por el **Ing. Joel Cáliz** para complementar las lecciones en video de mi canal de YouTube.
