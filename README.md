@@ -30,7 +30,7 @@ Para abrir las simulaciones de este repositorio, te recomendamos instalar o usar
 Los archivos están organizados por temas para facilitar tu estudio:
 
 * `/01-Polarizacion-DC`: Circuitos de polarización fija, estabilizado por emisor y divisor de voltaje.
-* `/02-Analisis en DC de circuito realimentado en colector
+* `/02-Configuración de realimentación del colector`Analisis en DC de circuito realimentado en colector
 * `/03-Analisis-AC-Pequena-Senal`: Modelos $r_e$ y parámetros híbridos.
 * `/04-Configuraciones-Amplificadores`: Emisor común, Colector común y Base común.
 * `/05-Respuesta-en-Frecuencia`: Análisis de corte en baja y alta frecuencia.
