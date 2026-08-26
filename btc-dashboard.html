@@ -70,6 +70,22 @@
     background:var(--panel2);border:1px solid var(--border);color:var(--text);
     border-radius:8px;padding:6px 8px;width:130px;font-size:.9rem;
   }
+  .live-price{font-size:1.3rem;font-weight:700;color:var(--accent);}
+  .live-dot{
+    width:9px;height:9px;border-radius:50%;background:var(--accent2);
+    box-shadow:0 0 0 0 rgba(63,185,80,.6);animation:pulse 2s infinite;flex-shrink:0;
+  }
+  .live-dot.stale{background:var(--danger);box-shadow:0 0 0 0 rgba(248,81,73,.6);animation:none;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(63,185,80,.6);}
+    70%{box-shadow:0 0 0 7px rgba(63,185,80,0);}
+    100%{box-shadow:0 0 0 0 rgba(63,185,80,0);}
+  }
+  #refreshPriceBtn{padding:5px 10px;font-size:.9rem;}
+  .manual-price-row{display:flex;gap:8px;margin-top:6px;}
+  .price-fallback-msg{font-size:.72rem;color:var(--muted);margin-top:4px;max-width:260px;}
+  .price-fallback-msg.warn{color:var(--danger);}
+  .price-toggle-link{font-size:.72rem;color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;margin-top:4px;display:inline-block;}
 
   .kpi-grid{
     display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:20px;
@@ -167,11 +183,18 @@
       <p>Registro de compras y ventas &middot; Seguimiento de meta financiera</p>
     </div>
     <div class="btc-price-box">
-      <label>Precio actual BTC (USD) — referencia</label>
+      <label id="btcPriceSourceLabel">Precio BTC/USD en vivo &middot; cargando…</label>
       <div class="row">
-        <input type="number" id="btcPriceRef" step="0.01" placeholder="Ej: 65000">
-        <button class="btn btn-ghost" id="saveBtcPrice">Guardar</button>
+        <div class="live-price" id="btcPriceLive">$0.00</div>
+        <span class="live-dot" id="livePriceDot" title="Actualizando en vivo"></span>
+        <button class="btn btn-ghost" id="refreshPriceBtn" title="Actualizar ahora">⟳</button>
       </div>
+      <div class="manual-price-row" id="manualPriceRow" style="display:none;">
+        <input type="number" id="btcPriceManual" step="0.01" placeholder="Ingresa el precio manualmente">
+        <button class="btn btn-ghost" id="saveManualPrice">Usar</button>
+      </div>
+      <div class="price-fallback-msg" id="priceFallbackMsg"></div>
+      <button class="price-toggle-link" id="toggleManualPrice">Ingresar precio manualmente</button>
     </div>
   </header>
 
@@ -272,8 +295,8 @@
         <input type="number" id="precioBtc" step="0.01" min="0" placeholder="0.00" required>
       </div>
       <div>
-        <label>Cantidad BTC</label>
-        <input type="text" id="cantidadBtc" placeholder="Auto" readonly>
+        <label>Cantidad BTC (manual)</label>
+        <input type="number" id="cantidadBtc" step="0.00000001" min="0" placeholder="0.00000000" required>
       </div>
       <div>
         <button type="submit" class="btn btn-primary" style="width:100%;">Agregar operación</button>
@@ -549,10 +572,11 @@ function render(){
   gainChart.data.datasets[0].backgroundColor = monthKeys.map(k=>monthMap[k].gain>=0?'#3fb950':'#f85149');
   gainChart.update();
 
-  // btc price ref input
-  const btcPriceInput = document.getElementById('btcPriceRef');
-  if(document.activeElement !== btcPriceInput){
-    btcPriceInput.value = state.btcPriceRef || '';
+  // live price display
+  document.getElementById('btcPriceLive').textContent = state.btcPriceRef ? fmtUsd(state.btcPriceRef) : '$0.00';
+  const precioBtcInputEl = document.getElementById('precioBtc');
+  if(document.activeElement !== precioBtcInputEl && state.btcPriceRef){
+    precioBtcInputEl.value = state.btcPriceRef;
   }
 }
 
@@ -562,18 +586,6 @@ const montoUsdInput = document.getElementById('montoUsd');
 const precioBtcInput = document.getElementById('precioBtc');
 const cantidadBtcInput = document.getElementById('cantidadBtc');
 
-function updateCantidad(){
-  const monto = parseFloat(montoUsdInput.value);
-  const precio = parseFloat(precioBtcInput.value);
-  if(monto > 0 && precio > 0){
-    cantidadBtcInput.value = (monto / precio).toFixed(8);
-  } else {
-    cantidadBtcInput.value = '';
-  }
-}
-montoUsdInput.addEventListener('input', updateCantidad);
-precioBtcInput.addEventListener('input', updateCantidad);
-
 document.getElementById('fecha').valueAsDate = new Date();
 
 form.addEventListener('submit', e=>{
@@ -582,12 +594,12 @@ form.addEventListener('submit', e=>{
   const tipo = document.getElementById('tipo').value;
   const montoUsd = parseFloat(montoUsdInput.value);
   const precioBtc = parseFloat(precioBtcInput.value);
-  if(!fecha || !montoUsd || !precioBtc || montoUsd<=0 || precioBtc<=0){
-    alert('Completa todos los campos con valores válidos.');
+  const cantidadBtc = parseFloat(cantidadBtcInput.value);
+  if(!fecha || !montoUsd || !precioBtc || !cantidadBtc || montoUsd<=0 || precioBtc<=0 || cantidadBtc<=0){
+    alert('Completa todos los campos con valores válidos (la cantidad de BTC se ingresa manualmente).');
     return;
   }
   const { saldo, btcHoldings } = computeDerived();
-  const cantidadBtc = montoUsd / precioBtc;
 
   if(tipo === 'compra' && montoUsd > saldo){
     if(!confirm('El monto supera tu saldo actual (' + fmtUsd(saldo) + '). ¿Registrar de todas formas?')) return;
@@ -600,22 +612,96 @@ form.addEventListener('submit', e=>{
     id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
     fecha, tipo, montoUsd, precioBtc, cantidadBtc
   });
-  state.btcPriceRef = precioBtc;
   saveState();
   form.reset();
   document.getElementById('fecha').valueAsDate = new Date();
-  cantidadBtcInput.value = '';
+  if(state.btcPriceRef) precioBtcInput.value = state.btcPriceRef;
   render();
 });
 
-document.getElementById('saveBtcPrice').addEventListener('click', ()=>{
-  const val = parseFloat(document.getElementById('btcPriceRef').value);
+// ---- Live BTC price (Binance -> CoinGecko fallback -> manual) ----
+const btcPriceLiveEl = document.getElementById('btcPriceLive');
+const btcPriceSourceLabel = document.getElementById('btcPriceSourceLabel');
+const livePriceDot = document.getElementById('livePriceDot');
+const priceFallbackMsg = document.getElementById('priceFallbackMsg');
+const manualPriceRow = document.getElementById('manualPriceRow');
+const toggleManualPrice = document.getElementById('toggleManualPrice');
+
+let priceAutoFailCount = 0;
+
+async function fetchBtcPriceBinance(){
+  const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+  if(!res.ok) throw new Error('Binance HTTP ' + res.status);
+  const data = await res.json();
+  const price = parseFloat(data.price);
+  if(!price) throw new Error('Precio inválido de Binance');
+  return { price, source: 'Binance' };
+}
+
+async function fetchBtcPriceCoinGecko(){
+  const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+  if(!res.ok) throw new Error('CoinGecko HTTP ' + res.status);
+  const data = await res.json();
+  const price = data && data.bitcoin && data.bitcoin.usd;
+  if(!price) throw new Error('Precio inválido de CoinGecko');
+  return { price, source: 'CoinGecko' };
+}
+
+async function refreshBtcPrice(){
+  btcPriceSourceLabel.textContent = 'Precio BTC/USD en vivo · actualizando…';
+  try{
+    let result;
+    try{
+      result = await fetchBtcPriceBinance();
+    }catch(errBinance){
+      result = await fetchBtcPriceCoinGecko();
+    }
+    state.btcPriceRef = result.price;
+    saveState();
+    priceAutoFailCount = 0;
+    btcPriceLiveEl.textContent = fmtUsd(result.price);
+    btcPriceSourceLabel.textContent = 'Precio BTC/USD en vivo · fuente: ' + result.source;
+    livePriceDot.classList.remove('stale');
+    priceFallbackMsg.classList.remove('warn');
+    priceFallbackMsg.textContent = 'Actualizado ' + new Date().toLocaleTimeString();
+    render();
+  }catch(err){
+    priceAutoFailCount++;
+    livePriceDot.classList.add('stale');
+    btcPriceSourceLabel.textContent = 'Precio BTC/USD en vivo · sin conexión';
+    priceFallbackMsg.classList.add('warn');
+    priceFallbackMsg.textContent = 'No se pudo obtener el precio automático (Binance/CoinGecko). Usa el precio manual mientras tanto.';
+    if(state.btcPriceRef){
+      btcPriceLiveEl.textContent = fmtUsd(state.btcPriceRef) + ' (último)';
+    }
+    if(priceAutoFailCount >= 1){
+      manualPriceRow.style.display = 'flex';
+    }
+  }
+}
+
+document.getElementById('refreshPriceBtn').addEventListener('click', refreshBtcPrice);
+
+toggleManualPrice.addEventListener('click', ()=>{
+  manualPriceRow.style.display = manualPriceRow.style.display === 'flex' ? 'none' : 'flex';
+});
+
+document.getElementById('saveManualPrice').addEventListener('click', ()=>{
+  const val = parseFloat(document.getElementById('btcPriceManual').value);
   if(val > 0){
     state.btcPriceRef = val;
     saveState();
+    btcPriceLiveEl.textContent = fmtUsd(val);
+    btcPriceSourceLabel.textContent = 'Precio BTC/USD · ingresado manualmente';
+    livePriceDot.classList.add('stale');
+    priceFallbackMsg.classList.remove('warn');
+    priceFallbackMsg.textContent = 'Precio fijado manualmente. Pulsa ⟳ para volver a intentar la fuente en vivo.';
     render();
   }
 });
+
+refreshBtcPrice();
+setInterval(refreshBtcPrice, 30000);
 
 document.getElementById('editGoalBtn').addEventListener('click', ()=>{
   const nuevaMeta = prompt('Nueva meta (USD):', state.meta);
