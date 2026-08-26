@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Académico - Electrónica 3 | ULA</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root {
+    --primary: #4f6ef7;
+    --primary-dark: #3a52c4;
+    --success: #2fb380;
+    --danger: #e5566d;
+    --warning: #f2a541;
+    --bg: #f4f6fb;
+    --card-bg: #ffffff;
+    --text: #2b2f3a;
+    --text-muted: #7a8194;
+    --border: #e6e9f2;
+    --radius: 14px;
+    --shadow: 0 4px 18px rgba(40, 50, 90, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Barra superior ---------- */
+  header.topbar {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    padding: 18px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    box-shadow: var(--shadow);
+  }
+
+  .topbar .title h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .topbar .title p {
+    font-size: 0.85rem;
+    opacity: 0.85;
+  }
+
+  .topbar .stats {
+    display: flex;
+    gap: 18px;
+    font-size: 0.85rem;
+  }
+
+  .topbar .stats span {
+    background: rgba(255,255,255,0.15);
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ---------- Layout principal ---------- */
+  .layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  nav.sidebar {
+    width: 220px;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  nav.sidebar button {
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  nav.sidebar button:hover {
+    background: var(--bg);
+    color: var(--primary);
+  }
+
+  nav.sidebar button.active {
+    background: #eef1ff;
+    color: var(--primary);
+    border-left-color: var(--primary);
+    font-weight: 600;
+  }
+
+  main {
+    flex: 1;
+    padding: 28px;
+    overflow-y: auto;
+  }
+
+  .module {
+    display: none;
+    animation: fadeIn 0.35s ease;
+  }
+
+  .module.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+
+  .card h2 {
+    font-size: 1.15rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary-dark);
+  }
+
+  /* ---------- Tablas ---------- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  thead th {
+    text-align: left;
+    padding: 10px 12px;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+  }
+
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr:hover {
+    background: #fafbff;
+  }
+
+  /* ---------- Botones ---------- */
+  .btn {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  .btn:active { transform: scale(0.96); }
+
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-outline { background: none; border: 1px solid var(--border); color: var(--text); }
+
+  .toggle-attendance {
+    min-width: 130px;
+    justify-content: center;
+    font-weight: 600;
+  }
+
+  .toggle-attendance.present {
+    background: var(--success);
+    color: #fff;
+  }
+
+  .toggle-attendance.absent {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  .badge {
+    background: #eef1ff;
+    color: var(--primary);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  /* ---------- Formularios ---------- */
+  .form-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .form-row input, .form-row textarea {
+    flex: 1;
+    min-width: 160px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
+
+  .form-row input:focus, .form-row textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  input.grade-input {
+    width: 70px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  input.grade-input.invalid {
+    border-color: var(--danger);
+    background: #fff0f2;
+  }
+
+  /* ---------- Listas ---------- */
+  ul.item-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  ul.item-list li {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  ul.item-list li.completed span.text {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+
+  .item-info { flex: 1; }
+  .item-info strong { display: block; }
+  .item-info small { color: var(--text-muted); }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 24px;
+    font-size: 0.9rem;
+  }
+
+  footer {
+    text-align: center;
+    padding: 14px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    nav.sidebar {
+      width: 100%;
+      flex-direction: row;
+      overflow-x: auto;
+      padding: 10px;
+    }
+    nav.sidebar button {
+      border-left: none;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+    }
+    nav.sidebar button.active {
+      border-bottom-color: var(--primary);
+    }
+    .topbar { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="title">
+    <h1><i class="fa-solid fa-microchip"></i> Electrónica 3 — Semestre B-2020</h1>
+    <p>Facultad de Ingeniería, Universidad de Los Andes (ULA)</p>
+  </div>
+  <div class="stats">
+    <span><i class="fa-solid fa-user-graduate"></i> <span id="studentCount">0</span> estudiantes</span>
+    <span><i class="fa-solid fa-calendar-day"></i> <span id="todayDate"></span></span>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <button class="nav-btn active" data-module="asistencias"><i class="fa-solid fa-clipboard-check"></i> Asistencias</button>
+    <button class="nav-btn" data-module="clases"><i class="fa-solid fa-chalkboard"></i> Próximas Clases</button>
+    <button class="nav-btn" data-module="notas"><i class="fa-solid fa-file-signature"></i> Notas</button>
+    <button class="nav-btn" data-module="recordatorios"><i class="fa-solid fa-list-check"></i> Recordatorios</button>
+  </nav>
+
+  <main>
+    <!-- ================= MÓDULO ASISTENCIAS ================= -->
+    <section id="asistencias" class="module active">
+      <div class="card">
+        <h2><i class="fa-solid fa-clipboard-check"></i> Control de Asistencias</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Estudiante</th>
+              <th>Estado</th>
+              <th>Asistencias totales</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= MÓDULO PRÓXIMAS CLASES ================= -->
+    <section id="clases" class="module">
+      <div class="card">
+        <h2><i class="fa-solid fa-chalkboard"></i> Agregar Próxima Clase</h2>
+        <div class="form-row">
+          <input type="date" id="classDate">
+          <input type="text" id="classTopic" placeholder="Tema de la clase">
+          <input type="text" id="classNotes" placeholder="Observaciones (opcional)">
+          <button class="btn btn-primary" id="addClassBtn"><i class="fa-solid fa-plus"></i> Agregar</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2><i class="fa-solid fa-list"></i> Clases Programadas</h2>
+        <ul class="item-list" id="classList"></ul>
+      </div>
+    </section>
+
+    <!-- ================= MÓDULO NOTAS ================= -->
+    <section id="notas" class="module">
+      <div class="card">
+        <h2><i class="fa-solid fa-file-signature"></i> Registro de Notas (0 - 20)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Estudiante</th>
+              <th>Nota 1</th>
+              <th>Nota 2</th>
+              <th>Nota Final</th>
+            </tr>
+          </thead>
+          <tbody id="gradesBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= MÓDULO RECORDATORIOS ================= -->
+    <section id="recordatorios" class="module">
+      <div class="card">
+        <h2><i class="fa-solid fa-list-check"></i> Nuevo Recordatorio</h2>
+        <div class="form-row">
+          <input type="text" id="reminderText" placeholder="Escribe un recordatorio rápido...">
+          <button class="btn btn-primary" id="addReminderBtn"><i class="fa-solid fa-plus"></i> Agregar</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2><i class="fa-solid fa-bell"></i> Lista de Recordatorios</h2>
+        <ul class="item-list" id="reminderList"></ul>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>Panel de Control Académico &mdash; Electrónica 3 &mdash; ULA &copy; 2020</footer>
+
+<script>
+/* ============================================================
+   PANEL ACADÉMICO - Electrónica 3 - ULA
+   Todo el estado se persiste en localStorage.
+   ============================================================ */
+
+// ---------- Datos iniciales ----------
+const STUDENT_NAMES = [
+  "Ana Martínez", "Carlos Pérez", "Daniela Rojas", "Eduardo Sánchez",
+  "Fabiana Torres", "Gabriel Ramírez", "Helena Contreras", "Iván Suárez",
+  "Julia Mendoza", "Kevin Uzcátegui"
+];
+
+const STORAGE_KEYS = {
+  attendance: "eln3_attendance",
+  classes: "eln3_classes",
+  grades: "eln3_grades",
+  reminders: "eln3_reminders"
+};
+
+// ---------- Utilidades de almacenamiento ----------
+function loadData(key, fallback) {
+  const raw = localStorage.getItem(key);
+  return raw ? JSON.parse(raw) : fallback;
+}
+function saveData(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+// ---------- Navegación entre módulos ----------
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".module").forEach(m => m.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.module).classList.add("active");
+  });
+});
+
+// ---------- Fecha actual y contador de estudiantes ----------
+document.getElementById("todayDate").textContent = new Date().toLocaleDateString("es-VE", {
+  year: "numeric", month: "long", day: "numeric"
+});
+document.getElementById("studentCount").textContent = STUDENT_NAMES.length;
+
+/* ============================================================
+   MÓDULO 1: ASISTENCIAS
+   ============================================================ */
+let attendance = loadData(STORAGE_KEYS.attendance, STUDENT_NAMES.map(name => ({
+  name, present: false, totalPresent: 0
+})));
+
+function renderAttendance() {
+  const tbody = document.getElementById("attendanceBody");
+  tbody.innerHTML = "";
+  attendance.forEach((student, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td>${student.name}</td>
+      <td>
+        <button class="btn toggle-attendance ${student.present ? "present" : "absent"}" data-idx="${idx}">
+          <i class="fa-solid ${student.present ? "fa-check" : "fa-xmark"}"></i>
+          ${student.present ? "Asistió" : "No asistió"}
+        </button>
+      </td>
+      <td><span class="badge">${student.totalPresent}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.querySelectorAll(".toggle-attendance").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.idx);
+      const student = attendance[idx];
+      if (!student.present) {
+        student.totalPresent += 1;
+      } else {
+        student.totalPresent = Math.max(0, student.totalPresent - 1);
+      }
+      student.present = !student.present;
+      saveData(STORAGE_KEYS.attendance, attendance);
+      renderAttendance();
+    });
+  });
+}
+renderAttendance();
+
+/* ============================================================
+   MÓDULO 2: PRÓXIMAS CLASES
+   ============================================================ */
+let classes = loadData(STORAGE_KEYS.classes, []);
+
+function renderClasses() {
+  const list = document.getElementById("classList");
+  list.innerHTML = "";
+  if (classes.length === 0) {
+    list.innerHTML = `<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i> No hay clases programadas.</div>`;
+    return;
+  }
+  classes
+    .slice()
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .forEach(cls => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div class="item-info">
+          <strong>${cls.topic}</strong>
+          <small><i class="fa-solid fa-calendar"></i> ${cls.date}${cls.notes ? " — " + cls.notes : ""}</small>
+        </div>
+        <button class="btn btn-danger" data-id="${cls.id}"><i class="fa-solid fa-trash"></i></button>
+      `;
+      list.appendChild(li);
+    });
+
+  list.querySelectorAll("button[data-id]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      classes = classes.filter(c => String(c.id) !== id);
+      saveData(STORAGE_KEYS.classes, classes);
+      renderClasses();
+    });
+  });
+}
+
+document.getElementById("addClassBtn").addEventListener("click", () => {
+  const date = document.getElementById("classDate").value;
+  const topic = document.getElementById("classTopic").value.trim();
+  const notes = document.getElementById("classNotes").value.trim();
+
+  if (!date || !topic) {
+    alert("Por favor completa la fecha y el tema de la clase.");
+    return;
+  }
+
+  classes.push({ id: Date.now(), date, topic, notes });
+  saveData(STORAGE_KEYS.classes, classes);
+
+  document.getElementById("classDate").value = "";
+  document.getElementById("classTopic").value = "";
+  document.getElementById("classNotes").value = "";
+
+  renderClasses();
+});
+
+renderClasses();
+
+/* ============================================================
+   MÓDULO 3: NOTAS
+   ============================================================ */
+let grades = loadData(STORAGE_KEYS.grades, STUDENT_NAMES.map(name => ({
+  name, n1: "", n2: ""
+})));
+
+function calcFinal(n1, n2) {
+  if (n1 === "" || n2 === "" || isNaN(n1) || isNaN(n2)) return "-";
+  return ((Number(n1) + Number(n2)) / 2).toFixed(2);
+}
+
+function renderGrades() {
+  const tbody = document.getElementById("gradesBody");
+  tbody.innerHTML = "";
+  grades.forEach((g, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${g.name}</td>
+      <td><input type="number" min="0" max="20" step="0.1" class="grade-input" data-idx="${idx}" data-field="n1" value="${g.n1}"></td>
+      <td><input type="number" min="0" max="20" step="0.1" class="grade-input" data-idx="${idx}" data-field="n2" value="${g.n2}"></td>
+      <td><span class="badge">${calcFinal(g.n1, g.n2)}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.querySelectorAll(".grade-input").forEach(input => {
+    input.addEventListener("input", () => {
+      const idx = Number(input.dataset.idx);
+      const field = input.dataset.field;
+      let value = input.value;
+
+      if (value !== "" && (Number(value) < 0 || Number(value) > 20)) {
+        input.classList.add("invalid");
+      } else {
+        input.classList.remove("invalid");
+        grades[idx][field] = value;
+        saveData(STORAGE_KEYS.grades, grades);
+        const row = input.closest("tr");
+        row.querySelector("td:last-child .badge").textContent = calcFinal(grades[idx].n1, grades[idx].n2);
+      }
+    });
+  });
+}
+renderGrades();
+
+/* ============================================================
+   MÓDULO 4: RECORDATORIOS
+   ============================================================ */
+let reminders = loadData(STORAGE_KEYS.reminders, []);
+
+function renderReminders() {
+  const list = document.getElementById("reminderList");
+  list.innerHTML = "";
+  if (reminders.length === 0) {
+    list.innerHTML = `<div class="empty-state"><i class="fa-solid fa-bell-slash"></i> No hay recordatorios pendientes.</div>`;
+    return;
+  }
+  reminders.forEach(r => {
+    const li = document.createElement("li");
+    li.className = r.done ? "completed" : "";
+    li.innerHTML = `
+      <div class="item-info">
+        <span class="text">${r.text}</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn ${r.done ? "btn-outline" : "btn-success"}" data-action="toggle" data-id="${r.id}">
+          <i class="fa-solid ${r.done ? "fa-rotate-left" : "fa-check"}"></i>
+        </button>
+        <button class="btn btn-danger" data-action="delete" data-id="${r.id}">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+
+  list.querySelectorAll("button[data-action]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      if (btn.dataset.action === "toggle") {
+        const r = reminders.find(rem => String(rem.id) === id);
+        r.done = !r.done;
+      } else {
+        reminders = reminders.filter(rem => String(rem.id) !== id);
+      }
+      saveData(STORAGE_KEYS.reminders, reminders);
+      renderReminders();
+    });
+  });
+}
+
+document.getElementById("addReminderBtn").addEventListener("click", () => {
+  const input = document.getElementById("reminderText");
+  const text = input.value.trim();
+  if (!text) return;
+  reminders.push({ id: Date.now(), text, done: false });
+  saveData(STORAGE_KEYS.reminders, reminders);
+  input.value = "";
+  renderReminders();
+});
+
+document.getElementById("reminderText").addEventListener("keypress", e => {
+  if (e.key === "Enter") document.getElementById("addReminderBtn").click();
+});
+
+renderReminders();
+</script>
+</body>
+</html>
