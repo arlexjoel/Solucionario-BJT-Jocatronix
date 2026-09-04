@@ -34,6 +34,7 @@
     --danger:#f85149;
     --blue:#58a6ff;
     --purple:#a371f7;
+    --cyan:#39c5cf;
     --radius:14px;
   }
   *{box-sizing:border-box;}
@@ -62,7 +63,7 @@
   header p{margin:4px 0 0;color:var(--muted);font-size:.9rem;}
   .btc-price-box{
     background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-    padding:10px 18px;display:flex;flex-direction:column;gap:2px;min-width:220px;
+    padding:10px 18px;display:flex;flex-direction:column;gap:2px;min-width:230px;
   }
   .btc-price-box label{font-size:.75rem;color:var(--muted);}
   .btc-price-box .row{display:flex;gap:8px;align-items:center;}
@@ -105,6 +106,7 @@
   .kpi.blue{--accent-color:var(--blue);}
   .kpi.purple{--accent-color:var(--purple);}
   .kpi.gold{--accent-color:var(--accent);}
+  .kpi.cyan{--accent-color:var(--cyan);}
 
   .progress-panel{
     background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
@@ -133,12 +135,15 @@
   .panel{
     background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;
   }
-  .panel h3{margin:0 0 14px;font-size:1rem;}
+  .panel h3{margin:0 0 14px;font-size:1rem;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  .panel h3 .hint{font-size:.72rem;color:var(--muted);font-weight:400;text-transform:none;}
   .panel canvas{max-height:280px;}
 
   form.entry-form{
     display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end;
   }
+  form.entry-form.mov-form{grid-template-columns:repeat(4,1fr);}
+  form.entry-form.asset-form{grid-template-columns:repeat(4,1fr);}
   @media (max-width:900px){form.entry-form{grid-template-columns:repeat(2,1fr);}}
   form.entry-form label{font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;}
   form.entry-form input, form.entry-form select{
@@ -151,6 +156,7 @@
   }
   .btn:active{transform:scale(.97);}
   .btn-primary{background:var(--accent);color:#1a1200;}
+  .btn-blue{background:var(--blue);color:#0b1220;}
   .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
   .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
   .btn:hover{opacity:.9;}
@@ -162,13 +168,29 @@
   .tag{padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:700;}
   .tag.compra{background:rgba(63,185,80,.15);color:var(--accent2);}
   .tag.venta{background:rgba(248,81,73,.15);color:var(--danger);}
+  .tag.deposito{background:rgba(63,185,80,.15);color:var(--accent2);}
+  .tag.retiro{background:rgba(248,81,73,.15);color:var(--danger);}
+  .tag.cripto{background:rgba(247,147,26,.15);color:var(--accent);}
+  .tag.accion{background:rgba(88,166,255,.15);color:var(--blue);}
   .table-wrap{max-height:340px;overflow-y:auto;}
+  .table-wrap.small{max-height:220px;}
   .empty-msg{color:var(--muted);text-align:center;padding:20px;font-size:.85rem;}
   .actions-cell{display:flex;gap:6px;}
   .icon-btn{
     background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;
   }
   .icon-btn:hover{color:var(--danger);}
+  .roi-pos{color:var(--accent2);font-weight:700;}
+  .roi-neg{color:var(--danger);font-weight:700;}
+  .roi-muted{color:var(--muted);}
+
+  .price-edit-input{
+    width:100px;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:6px;padding:4px 6px;font-size:.82rem;
+  }
+  .asset-price-cell{display:flex;gap:6px;align-items:center;}
+  .auto-badge{font-size:.65rem;color:var(--accent2);border:1px solid var(--accent2);border-radius:999px;padding:1px 6px;}
+  .manual-badge{font-size:.65rem;color:var(--blue);border:1px solid var(--blue);border-radius:999px;padding:1px 6px;}
 
   footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;padding-bottom:10px;}
   .reset-link{color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:none;font-size:.75rem;}
@@ -179,7 +201,7 @@
 
   <header>
     <div>
-      <h1><span class="coin">₿</span> BTC Trading Dashboard</h1>
+      <h1><span class="coin">₿</span> BTC &amp; Acciones Trading Dashboard</h1>
       <p>Registro de compras y ventas &middot; Seguimiento de meta financiera</p>
     </div>
     <div class="btc-price-box">
@@ -206,14 +228,14 @@
       <div class="sub">Efectivo disponible</div>
     </div>
     <div class="kpi blue">
-      <div class="label">BTC en Cartera</div>
-      <div class="value" id="kpiBtc">0.00000000</div>
-      <div class="sub" id="kpiBtcUsd">≈ $0.00 USD</div>
+      <div class="label">Valor de Cartera</div>
+      <div class="value" id="kpiValorCartera">$0.00</div>
+      <div class="sub" id="kpiValorCarteraSub">0 activos en cartera</div>
     </div>
     <div class="kpi" id="kpiPatrimonioCard">
       <div class="label">Patrimonio Total</div>
       <div class="value" id="kpiPatrimonio">$0.00</div>
-      <div class="sub">Saldo + BTC valorizado</div>
+      <div class="sub">Saldo + Cartera valorizada</div>
     </div>
     <div class="kpi purple">
       <div class="label">Ganancia / Pérdida</div>
@@ -224,6 +246,11 @@
       <div class="label">Operaciones Totales</div>
       <div class="value" id="kpiOps">0</div>
       <div class="sub" id="kpiOpsMes">0 este mes</div>
+    </div>
+    <div class="kpi cyan">
+      <div class="label">Volatilidad del Portafolio</div>
+      <div class="value" id="kpiVolatilidad">0.00%</div>
+      <div class="sub" id="kpiVolatilidadSub">Desv. estándar de retornos</div>
     </div>
   </div>
 
@@ -271,13 +298,64 @@
     </div>
   </div>
 
-  <!-- FORM -->
+  <div class="grid-3">
+    <div class="panel">
+      <h3>💹 Inversión Acumulada vs Valor Actual <span class="hint">Capital neto invertido vs. valor de mercado de la cartera</span></h3>
+      <canvas id="flowChart"></canvas>
+    </div>
+    <div class="panel">
+      <h3>🏦 Depósitos y Retiros Mensuales <span class="hint">Movimientos de efectivo</span></h3>
+      <canvas id="movChart"></canvas>
+    </div>
+  </div>
+
+  <!-- CARTERA DE ACTIVOS -->
   <div class="panel" style="margin-bottom:20px;">
-    <h3>➕ Registrar Operación</h3>
+    <h3>💼 Cartera de Activos</h3>
+    <div class="table-wrap small">
+      <table>
+        <thead>
+          <tr>
+            <th>Activo</th><th>Tipo</th><th>Cantidad</th><th>Precio</th><th>Valor</th><th>% Cartera</th><th>ROI no realizado</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="assetsTableBody"></tbody>
+      </table>
+      <div class="empty-msg" id="assetsEmptyMsg">Aún no tienes activos en cartera.</div>
+    </div>
+    <div style="margin-top:14px;">
+      <button class="reset-link" id="toggleAssetForm">+ Agregar Acción a la cartera</button>
+      <form class="entry-form asset-form" id="assetForm" style="display:none;margin-top:10px;">
+        <div>
+          <label>Símbolo / Ticker</label>
+          <input type="text" id="assetTicker" placeholder="Ej: AAPL" required maxlength="12">
+        </div>
+        <div>
+          <label>Nombre</label>
+          <input type="text" id="assetNombre" placeholder="Ej: Apple Inc." required>
+        </div>
+        <div>
+          <label>Precio actual (USD, manual)</label>
+          <input type="number" id="assetPrecio" step="0.01" min="0" placeholder="0.00" required>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-blue" style="width:100%;">Agregar Acción</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FORM OPERACIONES -->
+  <div class="panel" style="margin-bottom:20px;">
+    <h3>➕ Registrar Operación (Compra / Venta)</h3>
     <form class="entry-form" id="opForm">
       <div>
         <label>Fecha</label>
         <input type="date" id="fecha" required>
+      </div>
+      <div>
+        <label>Activo</label>
+        <select id="activoSelect"></select>
       </div>
       <div>
         <label>Tipo</label>
@@ -291,11 +369,11 @@
         <input type="number" id="montoUsd" step="0.01" min="0" placeholder="0.00" required>
       </div>
       <div>
-        <label>Precio BTC (USD)</label>
+        <label>Precio del activo (USD)</label>
         <input type="number" id="precioBtc" step="0.01" min="0" placeholder="0.00" required>
       </div>
       <div>
-        <label>Cantidad BTC (manual)</label>
+        <label>Cantidad (manual)</label>
         <input type="number" id="cantidadBtc" step="0.00000001" min="0" placeholder="0.00000000" required>
       </div>
       <div>
@@ -304,19 +382,58 @@
     </form>
   </div>
 
-  <!-- TABLE -->
-  <div class="panel">
+  <!-- FORM MOVIMIENTOS -->
+  <div class="panel" style="margin-bottom:20px;">
+    <h3>🏦 Registrar Depósito / Retiro</h3>
+    <form class="entry-form mov-form" id="movForm">
+      <div>
+        <label>Fecha</label>
+        <input type="date" id="movFecha" required>
+      </div>
+      <div>
+        <label>Tipo</label>
+        <select id="movTipo">
+          <option value="deposito">Depósito</option>
+          <option value="retiro">Retiro</option>
+        </select>
+      </div>
+      <div>
+        <label>Monto USD</label>
+        <input type="number" id="movMonto" step="0.01" min="0" placeholder="0.00" required>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-blue" style="width:100%;">Registrar movimiento</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TABLE OPERACIONES -->
+  <div class="panel" style="margin-bottom:20px;">
     <h3>📋 Historial de Operaciones</h3>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Fecha</th><th>Tipo</th><th>Monto USD</th><th>Precio BTC</th><th>Cantidad BTC</th><th>Saldo tras op.</th><th></th>
+            <th>Fecha</th><th>Activo</th><th>Tipo</th><th>Monto USD</th><th>Precio</th><th>Cantidad</th><th>Saldo tras op.</th><th>ROI</th><th></th>
           </tr>
         </thead>
         <tbody id="opsTableBody"></tbody>
       </table>
       <div class="empty-msg" id="emptyMsg">Aún no hay operaciones registradas.</div>
+    </div>
+  </div>
+
+  <!-- TABLE MOVIMIENTOS -->
+  <div class="panel">
+    <h3>🏦 Historial de Depósitos y Retiros</h3>
+    <div class="table-wrap small">
+      <table>
+        <thead>
+          <tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Saldo tras movimiento</th><th></th></tr>
+        </thead>
+        <tbody id="movTableBody"></tbody>
+      </table>
+      <div class="empty-msg" id="movEmptyMsg">Aún no hay depósitos ni retiros registrados.</div>
     </div>
   </div>
 
@@ -328,7 +445,8 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'btcDashboardData_v1';
+const STORAGE_KEY = 'btcDashboardData_v2';
+const OLD_STORAGE_KEY = 'btcDashboardData_v1';
 
 let state = loadState();
 
@@ -336,17 +454,52 @@ function defaultState(){
   return {
     inicial: 300,
     meta: 1000,
-    btcPriceRef: 0,
-    ops: [] // {fecha, tipo, montoUsd, precioBtc, cantidadBtc}
+    assets: {
+      BTC: { nombre: 'Bitcoin', tipo: 'cripto', price: 0, auto: true }
+    },
+    ops: [],       // {id, fecha, tipo:'compra'|'venta', activo, montoUsd, precio, cantidad}
+    movements: []  // {id, fecha, tipo:'deposito'|'retiro', monto}
   };
+}
+
+function migrateLegacy(parsed){
+  // Migrates the old single-asset (BTC-only) schema (v1) into the v2 multi-asset schema.
+  const base = defaultState();
+  const out = Object.assign(base, {
+    inicial: parsed.inicial ?? base.inicial,
+    meta: parsed.meta ?? base.meta,
+    assets: parsed.assets ? parsed.assets : base.assets,
+    movements: parsed.movements || []
+  });
+  if(parsed.btcPriceRef){
+    out.assets.BTC.price = parsed.btcPriceRef;
+  }
+  out.ops = (parsed.ops || []).map(op=>({
+    id: op.id,
+    fecha: op.fecha,
+    tipo: op.tipo,
+    activo: op.activo || 'BTC',
+    montoUsd: op.montoUsd,
+    precio: op.precio ?? op.precioBtc,
+    cantidad: op.cantidad ?? op.cantidadBtc
+  }));
+  return out;
 }
 
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return defaultState();
-    const parsed = JSON.parse(raw);
-    return Object.assign(defaultState(), parsed);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      const merged = Object.assign(defaultState(), parsed);
+      merged.assets = Object.assign({BTC:{nombre:'Bitcoin',tipo:'cripto',price:0,auto:true}}, parsed.assets || {});
+      return merged;
+    }
+    const legacyRaw = localStorage.getItem(OLD_STORAGE_KEY);
+    if(legacyRaw){
+      return migrateLegacy(JSON.parse(legacyRaw));
+    }
+    return defaultState();
   }catch(e){
     return defaultState();
   }
@@ -357,52 +510,144 @@ function saveState(){
 }
 
 function fmtUsd(n){
-  return '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return '$' + Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
-function fmtBtc(n){
-  return Number(n).toFixed(8);
+function fmtQty(n){
+  return Number(n||0).toFixed(8);
+}
+function fmtPct(n){
+  return (n>=0?'+':'') + Number(n||0).toFixed(2) + '%';
+}
+function currentPrice(activo){
+  return (state.assets[activo] && state.assets[activo].price) || 0;
 }
 
 // ---- Core calculations ----
-function computeDerived(){
-  let saldo = state.inicial;
-  let btcHoldings = 0;
-  const sortedOps = [...state.ops].sort((a,b)=> new Date(a.fecha) - new Date(b.fecha));
-  const history = [{fecha: sortedOps.length? sortedOps[0].fecha : new Date().toISOString().slice(0,10), saldo: state.inicial, btc:0, patrimonio: state.inicial}];
-
-  sortedOps.forEach(op=>{
-    if(op.tipo === 'compra'){
-      saldo -= op.montoUsd;
-      btcHoldings += op.cantidadBtc;
-    } else {
-      saldo += op.montoUsd;
-      btcHoldings -= op.cantidadBtc;
-    }
-    const refPrice = op.precioBtc || state.btcPriceRef || 0;
-    history.push({
-      fecha: op.fecha,
-      saldo,
-      btc: btcHoldings,
-      patrimonio: saldo + btcHoldings * refPrice
-    });
-  });
-
-  return { saldo, btcHoldings, sortedOps, history };
-}
-
 function monthKey(dateStr){
   const d = new Date(dateStr);
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
 }
-
 function monthLabel(key){
   const [y,m] = key.split('-');
   const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   return meses[parseInt(m,10)-1] + ' ' + y;
 }
 
+function sortByFecha(list){
+  return [...list].sort((a,b)=> new Date(a.fecha) - new Date(b.fecha) || String(a.id).localeCompare(String(b.id)));
+}
+
+// Builds the full chronological timeline (ops + movements) tracking saldo,
+// per-asset holdings valued at the last known transaction price, and net
+// invested capital — used for the equity curve, the flow chart and volatility.
+function buildTimeline(){
+  const events = [
+    ...state.ops.map(op=>({...op, kind:'op'})),
+    ...state.movements.map(m=>({...m, kind:'mov'}))
+  ];
+  const sortedEvents = sortByFecha(events);
+
+  let saldo = state.inicial;
+  const holdings = {};
+  const lastPrice = {};
+  let investedNet = 0;
+
+  const startFecha = sortedEvents.length ? sortedEvents[0].fecha : new Date().toISOString().slice(0,10);
+  const points = [{fecha: startFecha, saldo, patrimonio: saldo, investedNet: 0, valorCartera: 0}];
+
+  sortedEvents.forEach(ev=>{
+    if(ev.kind === 'mov'){
+      if(ev.tipo === 'deposito') saldo += ev.monto; else saldo -= ev.monto;
+    } else {
+      holdings[ev.activo] = holdings[ev.activo] || 0;
+      lastPrice[ev.activo] = ev.precio;
+      if(ev.tipo === 'compra'){
+        saldo -= ev.montoUsd;
+        holdings[ev.activo] += ev.cantidad;
+        investedNet += ev.montoUsd;
+      } else {
+        saldo += ev.montoUsd;
+        holdings[ev.activo] -= ev.cantidad;
+        investedNet -= ev.montoUsd;
+      }
+    }
+    let valorCartera = 0;
+    Object.keys(holdings).forEach(a=>{
+      const p = lastPrice[a] !== undefined ? lastPrice[a] : currentPrice(a);
+      valorCartera += holdings[a] * p;
+    });
+    points.push({
+      fecha: ev.fecha,
+      saldo,
+      patrimonio: saldo + valorCartera,
+      investedNet: Math.max(0, investedNet),
+      valorCartera
+    });
+  });
+
+  return { sortedEvents, points, holdings, saldo, investedNet: Math.max(0, investedNet) };
+}
+
+// Snapshot valued at *current* live prices (for KPIs, cartera table, ROI).
+function computeSnapshot(){
+  const tl = buildTimeline();
+  let valorCarteraActual = 0;
+  const holdingsDetail = Object.keys(tl.holdings)
+    .filter(a=>Math.abs(tl.holdings[a]) > 1e-9)
+    .map(activo=>{
+      const cantidad = tl.holdings[activo];
+      const precio = currentPrice(activo);
+      const valor = cantidad * precio;
+      valorCarteraActual += valor;
+      return { activo, cantidad, precio, valor };
+    });
+  const patrimonio = tl.saldo + valorCarteraActual;
+  return { ...tl, valorCarteraActual, holdingsDetail, patrimonio };
+}
+
+// Enriches each op (chronological) with an ROI figure: unrealized ROI for
+// compras (using the current live price) and realized ROI for ventas
+// (using a running weighted-average cost basis per asset).
+function computeOpsWithRoi(){
+  const avgCost = {}; // activo -> {cantidad, costoTotal}
+  const sorted = sortByFecha(state.ops);
+  return sorted.map(op=>{
+    avgCost[op.activo] = avgCost[op.activo] || { cantidad: 0, costoTotal: 0 };
+    const ac = avgCost[op.activo];
+    if(op.tipo === 'compra'){
+      ac.cantidad += op.cantidad;
+      ac.costoTotal += op.montoUsd;
+      const precioActual = currentPrice(op.activo);
+      const valorActual = op.cantidad * precioActual;
+      const roi = op.montoUsd > 0 ? ((valorActual - op.montoUsd) / op.montoUsd) * 100 : null;
+      return { ...op, roi, roiType: 'unrealized' };
+    } else {
+      const avgCostPerUnit = ac.cantidad > 1e-12 ? (ac.costoTotal / ac.cantidad) : op.precio;
+      const roi = avgCostPerUnit > 0 ? ((op.precio - avgCostPerUnit) / avgCostPerUnit) * 100 : null;
+      ac.costoTotal -= avgCostPerUnit * op.cantidad;
+      ac.cantidad -= op.cantidad;
+      if(ac.cantidad < 1e-9){ ac.cantidad = 0; ac.costoTotal = 0; }
+      return { ...op, roi, roiType: 'realized' };
+    }
+  });
+}
+
+// Volatility: standard deviation of period-over-period % returns of the
+// portfolio's total value (saldo + cartera), across the event timeline.
+function computeVolatility(points){
+  const values = points.map(p=>p.patrimonio).filter(v=>v > 0);
+  if(values.length < 3) return 0;
+  const returns = [];
+  for(let i=1;i<values.length;i++){
+    returns.push((values[i] - values[i-1]) / values[i-1]);
+  }
+  const mean = returns.reduce((a,b)=>a+b,0) / returns.length;
+  const variance = returns.reduce((a,b)=>a + Math.pow(b-mean,2), 0) / returns.length;
+  return Math.sqrt(variance) * 100;
+}
+
 // ---- Charts ----
-let equityChart, pieChart, opsChart, gainChart;
+let equityChart, pieChart, opsChart, gainChart, flowChart, movChart;
 
 function initCharts(){
   const ctxEquity = document.getElementById('equityChart').getContext('2d');
@@ -459,24 +704,72 @@ function initCharts(){
       }
     }
   });
+
+  const ctxFlow = document.getElementById('flowChart').getContext('2d');
+  flowChart = new Chart(ctxFlow, {
+    type:'line',
+    data:{labels:[], datasets:[
+      {label:'Inversión acumulada', data:[], borderColor:'#a371f7', backgroundColor:'rgba(163,113,247,0.12)', fill:true, tension:.25, stepped:false},
+      {label:'Valor actual de cartera', data:[], borderColor:'#3fb950', backgroundColor:'rgba(63,185,80,0.12)', fill:true, tension:.25}
+    ]},
+    options:{
+      responsive:true,
+      plugins:{legend:{labels:{color:'#e8eaf0'}}},
+      scales:{
+        x:{ticks:{color:'#8b93a7'}, grid:{color:'#2a2f3d'}},
+        y:{ticks:{color:'#8b93a7'}, grid:{color:'#2a2f3d'}}
+      }
+    }
+  });
+
+  const ctxMov = document.getElementById('movChart').getContext('2d');
+  movChart = new Chart(ctxMov, {
+    type:'bar',
+    data:{labels:[], datasets:[
+      {label:'Depósitos', data:[], backgroundColor:'#3fb950'},
+      {label:'Retiros', data:[], backgroundColor:'#f85149'}
+    ]},
+    options:{
+      responsive:true,
+      plugins:{legend:{labels:{color:'#e8eaf0'}}},
+      scales:{
+        x:{ticks:{color:'#8b93a7'}, grid:{display:false}},
+        y:{ticks:{color:'#8b93a7'}, grid:{color:'#2a2f3d'}}
+      }
+    }
+  });
+}
+
+function populateActivoSelect(){
+  const sel = document.getElementById('activoSelect');
+  const prevValue = sel.value;
+  sel.innerHTML = '';
+  Object.keys(state.assets).forEach(key=>{
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = key + ' — ' + (state.assets[key].nombre || key);
+    sel.appendChild(opt);
+  });
+  if(prevValue && state.assets[prevValue]) sel.value = prevValue;
 }
 
 function render(){
-  const { saldo, btcHoldings, sortedOps, history } = computeDerived();
-  const refPrice = state.btcPriceRef || (sortedOps.length ? sortedOps[sortedOps.length-1].precioBtc : 0);
-  const btcValueUsd = btcHoldings * refPrice;
-  const patrimonio = saldo + btcValueUsd;
+  const snap = computeSnapshot();
+  const { saldo, valorCarteraActual, holdingsDetail, patrimonio, points } = snap;
   const ganancia = patrimonio - state.inicial;
   const gananciaPct = state.inicial ? (ganancia / state.inicial) * 100 : 0;
+  const volatilidad = computeVolatility(points);
 
   document.getElementById('kpiSaldo').textContent = fmtUsd(saldo);
-  document.getElementById('kpiBtc').textContent = fmtBtc(btcHoldings);
-  document.getElementById('kpiBtcUsd').textContent = '≈ ' + fmtUsd(btcValueUsd) + ' USD';
+  document.getElementById('kpiValorCartera').textContent = fmtUsd(valorCarteraActual);
+  document.getElementById('kpiValorCarteraSub').textContent = holdingsDetail.length + (holdingsDetail.length===1?' activo en cartera':' activos en cartera');
   document.getElementById('kpiPatrimonio').textContent = fmtUsd(patrimonio);
   document.getElementById('kpiGanancia').textContent = (ganancia>=0?'+':'') + fmtUsd(ganancia);
-  document.getElementById('kpiGananciaPct').textContent = (gananciaPct>=0?'+':'') + gananciaPct.toFixed(2) + '%';
+  document.getElementById('kpiGananciaPct').textContent = fmtPct(gananciaPct);
   document.getElementById('kpiGanancia').style.color = ganancia >= 0 ? '#3fb950' : '#f85149';
+  document.getElementById('kpiVolatilidad').textContent = volatilidad.toFixed(2) + '%';
 
+  const sortedOps = sortByFecha(state.ops);
   document.getElementById('kpiOps').textContent = sortedOps.length;
   const thisMonthKey = monthKey(new Date().toISOString());
   const opsThisMonth = sortedOps.filter(o=>monthKey(o.fecha)===thisMonthKey).length;
@@ -496,29 +789,80 @@ function render(){
     ? '¡Meta alcanzada! 🎉'
     : 'Falta: ' + fmtUsd(remaining);
 
-  // table
+  // ---- Cartera de Activos table ----
+  const assetsTbody = document.getElementById('assetsTableBody');
+  assetsTbody.innerHTML = '';
+  const assetsEmptyMsg = document.getElementById('assetsEmptyMsg');
+  if(holdingsDetail.length === 0){
+    assetsEmptyMsg.style.display = 'block';
+  } else {
+    assetsEmptyMsg.style.display = 'none';
+    const opsWithRoi = computeOpsWithRoi();
+    holdingsDetail.forEach(h=>{
+      const meta = state.assets[h.activo] || {};
+      const pctCartera = valorCarteraActual > 0 ? (h.valor / valorCarteraActual) * 100 : 0;
+      const compras = opsWithRoi.filter(o=>o.activo === h.activo && o.tipo === 'compra' && o.roi !== null);
+      const roiPromedio = compras.length ? compras.reduce((a,o)=>a+o.roi,0) / compras.length : null;
+      const tr = document.createElement('tr');
+      const roiClass = roiPromedio === null ? 'roi-muted' : (roiPromedio >= 0 ? 'roi-pos' : 'roi-neg');
+      const roiTxt = roiPromedio === null ? '—' : fmtPct(roiPromedio);
+      const priceCell = meta.auto
+        ? `<span class="auto-badge">AUTO</span> ${fmtUsd(h.precio)}`
+        : `<span class="asset-price-cell"><span class="manual-badge">MANUAL</span>
+             <input type="number" class="price-edit-input" step="0.01" min="0" value="${h.precio}" data-asset="${h.activo}"></span>`;
+      tr.innerHTML = `
+        <td><strong>${h.activo}</strong><br><span style="color:var(--muted);font-size:.78rem;">${meta.nombre||''}</span></td>
+        <td><span class="tag ${meta.tipo||'cripto'}">${meta.tipo === 'accion' ? 'Acción' : 'Cripto'}</span></td>
+        <td>${fmtQty(h.cantidad)}</td>
+        <td>${priceCell}</td>
+        <td>${fmtUsd(h.valor)}</td>
+        <td>${pctCartera.toFixed(1)}%</td>
+        <td class="${roiClass}">${roiTxt}</td>
+        <td></td>
+      `;
+      assetsTbody.appendChild(tr);
+    });
+    assetsTbody.querySelectorAll('.price-edit-input').forEach(inp=>{
+      inp.addEventListener('change', ()=>{
+        const val = parseFloat(inp.value);
+        const asset = inp.dataset.asset;
+        if(val > 0 && state.assets[asset]){
+          state.assets[asset].price = val;
+          saveState();
+          render();
+        }
+      });
+    });
+  }
+
+  // ---- Operaciones table ----
   const tbody = document.getElementById('opsTableBody');
   tbody.innerHTML = '';
   const emptyMsg = document.getElementById('emptyMsg');
-  if(sortedOps.length === 0){
+  const opsWithRoi = computeOpsWithRoi();
+  if(opsWithRoi.length === 0){
     emptyMsg.style.display = 'block';
   } else {
     emptyMsg.style.display = 'none';
     let runningSaldo = state.inicial;
-    const rows = sortedOps.map(op=>{
+    const rows = opsWithRoi.map(op=>{
       if(op.tipo === 'compra') runningSaldo -= op.montoUsd;
       else runningSaldo += op.montoUsd;
-      return {op, saldoTras: runningSaldo};
+      return { op, saldoTras: runningSaldo };
     });
     rows.slice().reverse().forEach(({op, saldoTras})=>{
       const tr = document.createElement('tr');
+      const roiClass = op.roi === null ? 'roi-muted' : (op.roi >= 0 ? 'roi-pos' : 'roi-neg');
+      const roiTxt = op.roi === null ? '—' : fmtPct(op.roi) + (op.roiType === 'realized' ? ' (realizado)' : ' (no realizado)');
       tr.innerHTML = `
         <td>${op.fecha}</td>
+        <td>${op.activo}</td>
         <td><span class="tag ${op.tipo}">${op.tipo === 'compra' ? 'Compra' : 'Venta'}</span></td>
         <td>${fmtUsd(op.montoUsd)}</td>
-        <td>${fmtUsd(op.precioBtc)}</td>
-        <td>${fmtBtc(op.cantidadBtc)}</td>
+        <td>${fmtUsd(op.precio)}</td>
+        <td>${fmtQty(op.cantidad)}</td>
         <td>${fmtUsd(saldoTras)}</td>
+        <td class="${roiClass}">${roiTxt}</td>
         <td class="actions-cell"><button class="icon-btn" data-id="${op.id}" title="Eliminar">✕</button></td>
       `;
       tbody.appendChild(tr);
@@ -532,20 +876,53 @@ function render(){
     });
   }
 
-  // equity chart
-  const labels = history.map(h=>h.fecha);
-  equityChart.data.labels = labels;
-  equityChart.data.datasets[0].data = history.map(h=>h.patrimonio);
-  equityChart.data.datasets[1].data = history.map(()=>state.meta);
+  // ---- Movimientos table ----
+  const movTbody = document.getElementById('movTableBody');
+  movTbody.innerHTML = '';
+  const movEmptyMsg = document.getElementById('movEmptyMsg');
+  const sortedMovs = sortByFecha(state.movements);
+  if(sortedMovs.length === 0){
+    movEmptyMsg.style.display = 'block';
+  } else {
+    movEmptyMsg.style.display = 'none';
+    let runningSaldoMov = state.inicial;
+    const movRows = sortedMovs.map(m=>{
+      if(m.tipo === 'deposito') runningSaldoMov += m.monto; else runningSaldoMov -= m.monto;
+      return { m, saldoTras: runningSaldoMov };
+    });
+    movRows.slice().reverse().forEach(({m, saldoTras})=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${m.fecha}</td>
+        <td><span class="tag ${m.tipo}">${m.tipo === 'deposito' ? 'Depósito' : 'Retiro'}</span></td>
+        <td>${fmtUsd(m.monto)}</td>
+        <td>${fmtUsd(saldoTras)}</td>
+        <td class="actions-cell"><button class="icon-btn" data-id="${m.id}" title="Eliminar">✕</button></td>
+      `;
+      movTbody.appendChild(tr);
+    });
+    movTbody.querySelectorAll('.icon-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.movements = state.movements.filter(m => m.id !== btn.dataset.id);
+        saveState();
+        render();
+      });
+    });
+  }
+
+  // ---- equity chart ----
+  equityChart.data.labels = points.map(p=>p.fecha);
+  equityChart.data.datasets[0].data = points.map(p=>p.patrimonio);
+  equityChart.data.datasets[1].data = points.map(()=>state.meta);
   equityChart.update();
 
-  // pie chart
+  // ---- pie chart ----
   const totalCompras = sortedOps.filter(o=>o.tipo==='compra').length;
   const totalVentas = sortedOps.filter(o=>o.tipo==='venta').length;
   pieChart.data.datasets[0].data = [totalCompras, totalVentas];
   pieChart.update();
 
-  // ops per month & gains per month
+  // ---- ops per month & gains per month ----
   const monthMap = {};
   sortedOps.forEach(op=>{
     const key = monthKey(op.fecha);
@@ -553,14 +930,11 @@ function render(){
     if(op.tipo === 'compra') monthMap[key].compras++;
     else monthMap[key].ventas++;
   });
-
-  // approximate monthly net gain: (ventas usd - compras usd) as realized cash flow per month
   sortedOps.forEach(op=>{
     const key = monthKey(op.fecha);
     if(op.tipo === 'venta') monthMap[key].gain += op.montoUsd;
     else monthMap[key].gain -= op.montoUsd;
   });
-
   const monthKeys = Object.keys(monthMap).sort();
   opsChart.data.labels = monthKeys.map(monthLabel);
   opsChart.data.datasets[0].data = monthKeys.map(k=>monthMap[k].compras);
@@ -572,50 +946,140 @@ function render(){
   gainChart.data.datasets[0].backgroundColor = monthKeys.map(k=>monthMap[k].gain>=0?'#3fb950':'#f85149');
   gainChart.update();
 
-  // live price display
-  document.getElementById('btcPriceLive').textContent = state.btcPriceRef ? fmtUsd(state.btcPriceRef) : '$0.00';
+  // ---- flow chart: inversión acumulada vs valor actual de cartera ----
+  flowChart.data.labels = points.map(p=>p.fecha);
+  flowChart.data.datasets[0].data = points.map(p=>p.investedNet);
+  flowChart.data.datasets[1].data = points.map(p=>p.valorCartera);
+  flowChart.update();
+
+  // ---- deposits/withdrawals per month ----
+  const movMonthMap = {};
+  sortedMovs.forEach(m=>{
+    const key = monthKey(m.fecha);
+    if(!movMonthMap[key]) movMonthMap[key] = {deposito:0, retiro:0};
+    if(m.tipo === 'deposito') movMonthMap[key].deposito += m.monto;
+    else movMonthMap[key].retiro += m.monto;
+  });
+  const movMonthKeys = Object.keys(movMonthMap).sort();
+  movChart.data.labels = movMonthKeys.map(monthLabel);
+  movChart.data.datasets[0].data = movMonthKeys.map(k=>movMonthMap[k].deposito);
+  movChart.data.datasets[1].data = movMonthKeys.map(k=>-movMonthMap[k].retiro);
+  movChart.update();
+
+  // ---- live price display + activo select + precio autofill ----
+  document.getElementById('btcPriceLive').textContent = currentPrice('BTC') ? fmtUsd(currentPrice('BTC')) : '$0.00';
+  populateActivoSelect();
   const precioBtcInputEl = document.getElementById('precioBtc');
-  if(document.activeElement !== precioBtcInputEl && state.btcPriceRef){
-    precioBtcInputEl.value = state.btcPriceRef;
+  const activoSel = document.getElementById('activoSelect');
+  if(document.activeElement !== precioBtcInputEl && document.activeElement !== activoSel){
+    const p = currentPrice(activoSel.value);
+    if(p) precioBtcInputEl.value = p;
   }
 }
 
-// ---- Form handling ----
+// ---- Form handling: operaciones ----
 const form = document.getElementById('opForm');
 const montoUsdInput = document.getElementById('montoUsd');
 const precioBtcInput = document.getElementById('precioBtc');
 const cantidadBtcInput = document.getElementById('cantidadBtc');
+const activoSelect = document.getElementById('activoSelect');
 
 document.getElementById('fecha').valueAsDate = new Date();
+
+activoSelect.addEventListener('change', ()=>{
+  const p = currentPrice(activoSelect.value);
+  if(p) precioBtcInput.value = p;
+});
 
 form.addEventListener('submit', e=>{
   e.preventDefault();
   const fecha = document.getElementById('fecha').value;
+  const activo = activoSelect.value;
   const tipo = document.getElementById('tipo').value;
   const montoUsd = parseFloat(montoUsdInput.value);
-  const precioBtc = parseFloat(precioBtcInput.value);
-  const cantidadBtc = parseFloat(cantidadBtcInput.value);
-  if(!fecha || !montoUsd || !precioBtc || !cantidadBtc || montoUsd<=0 || precioBtc<=0 || cantidadBtc<=0){
-    alert('Completa todos los campos con valores válidos (la cantidad de BTC se ingresa manualmente).');
+  const precio = parseFloat(precioBtcInput.value);
+  const cantidad = parseFloat(cantidadBtcInput.value);
+  if(!fecha || !activo || !montoUsd || !precio || !cantidad || montoUsd<=0 || precio<=0 || cantidad<=0){
+    alert('Completa todos los campos con valores válidos (la cantidad se ingresa manualmente).');
     return;
   }
-  const { saldo, btcHoldings } = computeDerived();
+  const snap = computeSnapshot();
+  const holdingActual = (snap.holdingsDetail.find(h=>h.activo===activo) || {cantidad:0}).cantidad;
 
-  if(tipo === 'compra' && montoUsd > saldo){
-    if(!confirm('El monto supera tu saldo actual (' + fmtUsd(saldo) + '). ¿Registrar de todas formas?')) return;
+  if(tipo === 'compra' && montoUsd > snap.saldo){
+    if(!confirm('El monto supera tu saldo actual (' + fmtUsd(snap.saldo) + '). ¿Registrar de todas formas?')) return;
   }
-  if(tipo === 'venta' && cantidadBtc > btcHoldings){
-    if(!confirm('La cantidad de BTC a vender supera tu tenencia actual (' + fmtBtc(btcHoldings) + '). ¿Registrar de todas formas?')) return;
+  if(tipo === 'venta' && cantidad > holdingActual){
+    if(!confirm('La cantidad a vender supera tu tenencia actual de ' + activo + ' (' + fmtQty(holdingActual) + '). ¿Registrar de todas formas?')) return;
   }
 
   state.ops.push({
     id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
-    fecha, tipo, montoUsd, precioBtc, cantidadBtc
+    fecha, tipo, activo, montoUsd, precio, cantidad
   });
+  if(state.assets[activo] && !state.assets[activo].auto){
+    state.assets[activo].price = precio;
+  }
   saveState();
   form.reset();
   document.getElementById('fecha').valueAsDate = new Date();
-  if(state.btcPriceRef) precioBtcInput.value = state.btcPriceRef;
+  populateActivoSelect();
+  const p = currentPrice(activoSelect.value);
+  if(p) precioBtcInput.value = p;
+  render();
+});
+
+// ---- Form handling: movimientos (depósitos/retiros) ----
+const movForm = document.getElementById('movForm');
+document.getElementById('movFecha').valueAsDate = new Date();
+
+movForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const fecha = document.getElementById('movFecha').value;
+  const tipo = document.getElementById('movTipo').value;
+  const monto = parseFloat(document.getElementById('movMonto').value);
+  if(!fecha || !monto || monto<=0){
+    alert('Completa fecha y monto con valores válidos.');
+    return;
+  }
+  const snap = computeSnapshot();
+  if(tipo === 'retiro' && monto > snap.saldo){
+    if(!confirm('El retiro supera tu saldo actual (' + fmtUsd(snap.saldo) + '). ¿Registrar de todas formas?')) return;
+  }
+  state.movements.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+    fecha, tipo, monto
+  });
+  saveState();
+  movForm.reset();
+  document.getElementById('movFecha').valueAsDate = new Date();
+  render();
+});
+
+// ---- Form handling: agregar Acción a la cartera ----
+const assetForm = document.getElementById('assetForm');
+document.getElementById('toggleAssetForm').addEventListener('click', ()=>{
+  assetForm.style.display = assetForm.style.display === 'none' ? 'grid' : 'none';
+});
+
+assetForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const ticker = document.getElementById('assetTicker').value.trim().toUpperCase();
+  const nombre = document.getElementById('assetNombre').value.trim();
+  const precio = parseFloat(document.getElementById('assetPrecio').value);
+  if(!ticker || !nombre || !precio || precio<=0){
+    alert('Completa símbolo, nombre y precio con valores válidos.');
+    return;
+  }
+  if(state.assets[ticker]){
+    alert('Ese símbolo ya existe en tu cartera.');
+    return;
+  }
+  state.assets[ticker] = { nombre, tipo:'accion', price: precio, auto:false };
+  saveState();
+  assetForm.reset();
+  assetForm.style.display = 'none';
+  populateActivoSelect();
   render();
 });
 
@@ -656,7 +1120,7 @@ async function refreshBtcPrice(){
     }catch(errBinance){
       result = await fetchBtcPriceCoinGecko();
     }
-    state.btcPriceRef = result.price;
+    state.assets.BTC.price = result.price;
     saveState();
     priceAutoFailCount = 0;
     btcPriceLiveEl.textContent = fmtUsd(result.price);
@@ -671,8 +1135,8 @@ async function refreshBtcPrice(){
     btcPriceSourceLabel.textContent = 'Precio BTC/USD en vivo · sin conexión';
     priceFallbackMsg.classList.add('warn');
     priceFallbackMsg.textContent = 'No se pudo obtener el precio automático (Binance/CoinGecko). Usa el precio manual mientras tanto.';
-    if(state.btcPriceRef){
-      btcPriceLiveEl.textContent = fmtUsd(state.btcPriceRef) + ' (último)';
+    if(state.assets.BTC.price){
+      btcPriceLiveEl.textContent = fmtUsd(state.assets.BTC.price) + ' (último)';
     }
     if(priceAutoFailCount >= 1){
       manualPriceRow.style.display = 'flex';
@@ -689,7 +1153,7 @@ toggleManualPrice.addEventListener('click', ()=>{
 document.getElementById('saveManualPrice').addEventListener('click', ()=>{
   const val = parseFloat(document.getElementById('btcPriceManual').value);
   if(val > 0){
-    state.btcPriceRef = val;
+    state.assets.BTC.price = val;
     saveState();
     btcPriceLiveEl.textContent = fmtUsd(val);
     btcPriceSourceLabel.textContent = 'Precio BTC/USD · ingresado manualmente';
@@ -720,6 +1184,7 @@ document.getElementById('resetAllBtn').addEventListener('click', ()=>{
   }
 });
 
+populateActivoSelect();
 initCharts();
 render();
 </script>
