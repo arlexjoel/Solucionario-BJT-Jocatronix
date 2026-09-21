@@ -279,7 +279,7 @@
                             <span id="label-asset-code" class="text-[10px] font-bold text-amber-400">BTC</span>
                         </div>
                         <div class="relative">
-                            <input type="number" step="any" min="0.00000001" id="input-crypto-amount" placeholder="Ej: 0.0025" required oninput="calculateFromAmount()" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3 pr-14 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
+                            <input type="number" step="any" min="0.00000001" id="input-crypto-amount" placeholder="Ej: 0.0025" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3 pr-14 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
                             <span id="badge-asset-symbol" class="absolute right-3 top-2.5 text-xs font-bold text-slate-500">BTC</span>
                         </div>
                     </div>
@@ -288,11 +288,11 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label for="input-asset-price" class="text-xs font-medium text-slate-400">Precio Unitario ($ USD)</label>
-                            <button type="button" onclick="useCurrentPriceInForm()" class="text-[10px] text-amber-400 hover:underline flex items-center gap-1"><i class="fa-solid fa-bolt"></i> Usar Precio en Vivo</button>
+                            <button type="button" onclick="useCurrentPriceInForm()" class="text-[10px] text-amber-400 hover:underline flex items-center gap-1"><i class="fa-solid fa-bolt"></i> Usar Precio en Vivo (solo este campo)</button>
                         </div>
                         <div class="relative">
                             <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-500">$</span>
-                            <input type="number" step="any" min="0.00001" id="input-asset-price" placeholder="Ej: 75600" required oninput="calculateTotalUsd()" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
+                            <input type="number" step="any" min="0.00001" id="input-asset-price" placeholder="Ej: 75600" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
                         </div>
                     </div>
 
@@ -301,7 +301,7 @@
                         <label id="lbl-cost-usd" for="input-cost-usd" class="block text-xs font-medium text-slate-400 mb-1">Monto Total USD (Invertido)</label>
                         <div class="relative">
                             <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-500">$</span>
-                            <input type="number" step="any" min="0.01" id="input-cost-usd" placeholder="Ej: 100.00" required oninput="calculateAmountFromTotal()" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
+                            <input type="number" step="any" min="0.01" id="input-cost-usd" placeholder="Ej: 100.00" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
                         </div>
                     </div>
 
@@ -313,15 +313,15 @@
                 </form>
             </div>
 
-            <!-- Chart Panel: Accumulated Realized Gains -->
+            <!-- Chart Panel: Monthly Realized Gains -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h3 class="font-bold text-white flex items-center gap-2">
                             <i class="fa-solid fa-chart-column text-amber-500"></i>
-                            Ganancia Acumulada Realizada por Mes ($ USD)
+                            Ganancias Mensuales Realizadas ($ USD)
                         </h3>
-                        <p class="text-xs text-slate-400">Progreso acumulado de utilidad realizada (ventas cerradas) mes a mes. Línea blanca = total acumulado</p>
+                        <p class="text-xs text-slate-400">Utilidad neta cerrada por ventas ejecutadas en cada mes (no acumula meses anteriores). Línea blanca = total del mes</p>
                     </div>
                 </div>
 
@@ -630,35 +630,6 @@
             });
         }
 
-        // Cálculos dinámicos del formulario
-        function calculateFromAmount() {
-            const amount = parseFloat(document.getElementById('input-crypto-amount').value);
-            const price = parseFloat(document.getElementById('input-asset-price').value);
-            if (amount > 0 && price > 0) {
-                document.getElementById('input-cost-usd').value = (amount * price).toFixed(2);
-            }
-        }
-
-        function calculateTotalUsd() {
-            const amount = parseFloat(document.getElementById('input-crypto-amount').value);
-            const price = parseFloat(document.getElementById('input-asset-price').value);
-            const cost = parseFloat(document.getElementById('input-cost-usd').value);
-
-            if (amount > 0 && price > 0) {
-                document.getElementById('input-cost-usd').value = (amount * price).toFixed(2);
-            } else if (cost > 0 && price > 0) {
-                document.getElementById('input-crypto-amount').value = (cost / price).toFixed(8);
-            }
-        }
-
-        function calculateAmountFromTotal() {
-            const cost = parseFloat(document.getElementById('input-cost-usd').value);
-            const price = parseFloat(document.getElementById('input-asset-price').value);
-            if (cost > 0 && price > 0) {
-                document.getElementById('input-crypto-amount').value = (cost / price).toFixed(8);
-            }
-        }
-
         function renderAssetSelectOptions() {
             const select = document.getElementById('input-asset');
             if (!select) return;
@@ -745,12 +716,11 @@
 
             document.getElementById('label-asset-code').textContent = asset;
             document.getElementById('badge-asset-symbol').textContent = asset;
-
-            if (asset !== 'NEW_CUSTOM' && asset !== 'NUEVA') {
-                useCurrentPriceInForm();
-            }
         }
 
+        // Rellena ÚNICAMENTE el campo de precio con la cotización en vivo
+        // (botón "Usar Precio en Vivo"). Cantidad y Monto Total se dejan
+        // intactos: se ingresan siempre a mano, sin recalcular entre sí.
         function useCurrentPriceInForm() {
             const select = document.getElementById('input-asset');
             let asset = select ? select.value : 'BTC';
@@ -764,7 +734,6 @@
             const liveP = livePrices[asset] ? livePrices[asset].price : 0;
             if (liveP > 0) {
                 document.getElementById('input-asset-price').value = liveP;
-                calculateTotalUsd();
                 showToast(`Precio de ${asset} aplicado: $${liveP.toLocaleString()}`, 'info');
             } else {
                 // Forzar búsqueda en API para el nuevo ticker
@@ -1061,9 +1030,9 @@
             });
         }
 
-        // Gráfico: GANANCIA ACUMULADA (running total mes a mes) de ventas
-        // cerradas, por criptomoneda, más una línea con el total acumulado
-        // combinado de toda la cartera.
+        // Gráfico: ganancia REALIZADA de CADA MES por separado (no acumulada
+        // entre meses) por criptomoneda, más una línea con el total de ese
+        // mismo mes combinando toda la cartera.
         function updateMonthlyChart(sortedTxs) {
             if (!monthlyGainsChart) return;
 
@@ -1113,28 +1082,20 @@
                 }
             });
 
-            // Convierte la ganancia de cada mes en un total ACUMULADO (running
-            // total), para que cada barra muestre la utilidad realizada desde
-            // el inicio hasta ese mes, en vez de solo la utilidad de ese mes.
+            // Cada barra = ganancia de ESE mes únicamente (no suma los meses
+            // anteriores). Ej: si Agosto fue +$22 y Septiembre +$17, la barra
+            // de Septiembre debe mostrar $17, no $39.
             const activeKeys = getActiveCryptoKeys();
-            const cumulativeByAsset = {};
-            activeKeys.forEach(key => {
-                let running = 0;
-                cumulativeByAsset[key] = months.map(m => {
-                    running += (monthlyGainByAsset[key] && monthlyGainByAsset[key][m]) || 0;
-                    return running;
-                });
-            });
 
             const chartDatasets = [];
             activeKeys.forEach(key => {
-                const values = cumulativeByAsset[key];
+                const values = months.map(m => (monthlyGainByAsset[key] && monthlyGainByAsset[key][m]) || 0);
                 const hadAnyOps = values.some(v => Math.abs(v) > 0.001);
 
                 if (hadAnyOps || key === 'BTC' || key === 'ETH') {
                     chartDatasets.push({
                         type: 'bar',
-                        label: `${key} (Acumulado $)`,
+                        label: `${key} ($ Ganancia del Mes)`,
                         data: values,
                         backgroundColor: CRYPTO_CONFIG[key].bg,
                         borderColor: CRYPTO_CONFIG[key].color,
@@ -1145,15 +1106,15 @@
                 }
             });
 
-            // Total acumulado combinado (todas las criptos), superpuesto como línea.
-            const totalCumulative = months.map((m, idx) =>
-                activeKeys.reduce((sum, key) => sum + (cumulativeByAsset[key] ? cumulativeByAsset[key][idx] : 0), 0)
+            // Total de ese mismo mes (no acumulado), combinando toda la cartera.
+            const totalPerMonth = months.map(m =>
+                activeKeys.reduce((sum, key) => sum + ((monthlyGainByAsset[key] && monthlyGainByAsset[key][m]) || 0), 0)
             );
             if (months.length > 0) {
                 chartDatasets.push({
                     type: 'line',
-                    label: 'Total Acumulado ($)',
-                    data: totalCumulative,
+                    label: 'Total del Mes ($)',
+                    data: totalPerMonth,
                     borderColor: '#f8fafc',
                     backgroundColor: 'rgba(248,250,252,0.08)',
                     borderWidth: 2,
