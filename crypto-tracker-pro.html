@@ -103,7 +103,7 @@
                     <div class="text-xs font-semibold uppercase tracking-wider text-amber-500 mb-1">Estrategia Activa Multi-Cripto</div>
                     <h2 class="text-xl font-bold text-white">Objetivo: Escalar de $300 a $1,000 USD</h2>
                     <p class="text-xs text-slate-400 mt-1">
-                        Reserva Base: <span class="text-slate-200 font-semibold">$300 USD</span> | Enfoque: Dynamic DCA + Toma de Ganancias
+                        Capital Total Desplegado: <span id="banner-capital-total" class="text-slate-200 font-semibold">$300.00 USD</span> | Enfoque: Dynamic DCA + Toma de Ganancias
                     </p>
                 </div>
 
@@ -118,7 +118,7 @@
                     </div>
                     <div class="flex justify-between text-xs text-slate-500 font-medium">
                         <span>$0 Ganancia</span>
-                        <span>Capital inicial: $300 USD</span>
+                        <span>Capital semilla original: $300 USD (fijo, para la meta)</span>
                         <span>Meta: +$700 Ganancia (Total $1,000)</span>
                     </div>
                 </div>
@@ -126,7 +126,7 @@
         </section>
 
         <!-- KPI Cards Grid -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
 
             <!-- KPI 1: Patrimonio Total -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
@@ -213,6 +213,111 @@
                 </div>
             </div>
 
+            <!-- KPI 6: Capital Total Aportado (Semilla + Inyecciones) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-medium text-slate-400">Capital Total Aportado</span>
+                        <h3 id="kpi-capital-base" class="text-lg font-bold text-white mt-1">$300.00</h3>
+                    </div>
+                    <div class="bg-cyan-500/10 p-2 rounded-xl border border-cyan-500/20 text-cyan-400">
+                        <i class="fa-solid fa-sack-dollar text-base"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Inyectado extra:</span>
+                    <span id="kpi-capital-injected" class="font-bold text-cyan-400">$0.00</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Capital / Fondos Section: inject or withdraw capital (separate from trading P/L) -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-3 mb-4">
+                <div>
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-sack-dollar text-cyan-400"></i>
+                        Capital / Fondos
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">Inyecta o retira capital sin afectar tu cálculo de ganancia real. La meta ($700 de utilidad) permanece fija.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Capital Form -->
+                <form id="add-capital-form" onsubmit="handleCapitalFormSubmit(event)" class="space-y-3">
+                    <input type="hidden" id="input-capital-type" value="deposito">
+
+                    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 w-full">
+                        <button type="button" id="btn-capital-deposito" onclick="setCapitalType('deposito')" class="flex-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-cyan-500 text-slate-950 transition">
+                            <i class="fa-solid fa-plus"></i> Inyectar Capital
+                        </button>
+                        <button type="button" id="btn-capital-retiro" onclick="setCapitalType('retiro')" class="flex-1 px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
+                            <i class="fa-solid fa-minus"></i> Retirar Capital
+                        </button>
+                    </div>
+
+                    <div>
+                        <label for="input-capital-date" class="block text-xs font-medium text-slate-400 mb-1">Fecha</label>
+                        <input type="date" id="input-capital-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                    </div>
+
+                    <div>
+                        <label id="lbl-capital-amount" for="input-capital-amount" class="block text-xs font-medium text-slate-400 mb-1">Monto a Inyectar ($ USD)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-500">$</span>
+                            <input type="number" step="any" min="0.01" id="input-capital-amount" placeholder="Ej: 200.00" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="input-capital-note" class="block text-xs font-medium text-slate-400 mb-1">Nota (opcional)</label>
+                        <input type="text" id="input-capital-note" placeholder="Ej: Ahorro de sueldo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                    </div>
+
+                    <button id="btn-submit-capital" type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 text-slate-950 font-bold py-2.5 rounded-xl shadow-lg shadow-cyan-500/10 transition duration-200 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-circle-plus"></i>
+                        <span>Registrar Inyección</span>
+                    </button>
+                </form>
+
+                <!-- Capital Summary + History -->
+                <div class="lg:col-span-2 flex flex-col">
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Capital Semilla</span>
+                            <div class="text-sm font-bold text-white mt-1">$300.00</div>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Inyectado / Retirado</span>
+                            <div id="capital-net-movements" class="text-sm font-bold text-cyan-400 mt-1">$0.00</div>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Capital Total Actual</span>
+                            <div id="capital-total-base" class="text-sm font-bold text-emerald-400 mt-1">$300.00</div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-slate-400 uppercase font-semibold border-b border-slate-800">
+                                <tr>
+                                    <th class="py-2 pr-3">Fecha</th>
+                                    <th class="py-2 pr-3">Tipo</th>
+                                    <th class="py-2 pr-3">Monto</th>
+                                    <th class="py-2 pr-3">Nota</th>
+                                    <th class="py-2 pr-3 text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="capital-tbody" class="divide-y divide-slate-800/60 text-slate-200"></tbody>
+                        </table>
+                        <div id="capital-empty-state" class="hidden py-6 text-center text-slate-500 text-xs">
+                            Aún no has inyectado ni retirado capital adicional.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Per Crypto Breakdown Section -->
@@ -420,11 +525,16 @@
         };
 
         let transactions = [];
+        let capitalMovements = []; // {id, date, type:'deposito'|'retiro', amount, note}
         let monthlyGainsChart = null;
 
         const LOCAL_STORAGE_KEY = 'multi_crypto_tracker_txs_v4';
+        const CAPITAL_STORAGE_KEY = 'multi_crypto_tracker_capital_v1';
         const GOAL_TARGET_USD = 1000.00;
-        const INITIAL_BASE_CAPITAL = 300.00;
+        const INITIAL_BASE_CAPITAL = 300.00; // Capital semilla original. La meta de ganancia
+                                              // ($700 = GOAL_TARGET_USD - INITIAL_BASE_CAPITAL)
+                                              // se calcula SIEMPRE sobre este valor fijo, para
+                                              // que inyectar capital nuevo no "adelante" la meta.
         const MAX_ACTIVE_CRYPTOS = 5;
 
         // Caso exacto del usuario para Agosto (+22 USD de ganancia real)
@@ -435,7 +545,9 @@
 
         window.onload = function() {
             document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('input-capital-date').value = new Date().toISOString().split('T')[0];
 
+            loadCapitalMovements();
             loadTransactions();
             initChart();
             fetchAllLivePrices();
@@ -459,6 +571,148 @@
 
         function saveTransactions() {
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(transactions));
+        }
+
+        function loadCapitalMovements() {
+            const saved = localStorage.getItem(CAPITAL_STORAGE_KEY);
+            if (saved) {
+                try {
+                    capitalMovements = JSON.parse(saved);
+                } catch (e) {
+                    capitalMovements = [];
+                }
+            } else {
+                capitalMovements = [];
+            }
+        }
+
+        function saveCapitalMovements() {
+            localStorage.setItem(CAPITAL_STORAGE_KEY, JSON.stringify(capitalMovements));
+        }
+
+        // Suma neta de inyecciones (+) y retiros (-) de capital adicional,
+        // SIN incluir el capital semilla ($300).
+        function getCapitalMovementsTotal() {
+            return capitalMovements.reduce((sum, m) => sum + (m.type === 'deposito' ? m.amount : -m.amount), 0);
+        }
+
+        // Capital total que el usuario ha puesto a trabajar: semilla + inyecciones - retiros.
+        // Es la base contra la que se calcula el efectivo disponible (NO la ganancia).
+        function getTotalCapitalBase() {
+            return INITIAL_BASE_CAPITAL + getCapitalMovementsTotal();
+        }
+
+        function setCapitalType(type) {
+            document.getElementById('input-capital-type').value = type;
+            const btnDep = document.getElementById('btn-capital-deposito');
+            const btnRet = document.getElementById('btn-capital-retiro');
+            const lbl = document.getElementById('lbl-capital-amount');
+            const btnSubmit = document.getElementById('btn-submit-capital');
+
+            if (type === 'deposito') {
+                btnDep.className = 'flex-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-cyan-500 text-slate-950 transition';
+                btnRet.className = 'flex-1 px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
+                lbl.textContent = 'Monto a Inyectar ($ USD)';
+                btnSubmit.className = 'w-full bg-gradient-to-r from-cyan-500 to-cyan-600 text-slate-950 font-bold py-2.5 rounded-xl shadow-lg shadow-cyan-500/10 transition duration-200 flex items-center justify-center space-x-2';
+                btnSubmit.innerHTML = '<i class="fa-solid fa-circle-plus"></i><span>Registrar Inyección</span>';
+            } else {
+                btnRet.className = 'flex-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-500 text-white transition';
+                btnDep.className = 'flex-1 px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
+                lbl.textContent = 'Monto a Retirar ($ USD)';
+                btnSubmit.className = 'w-full bg-gradient-to-r from-rose-500 to-rose-600 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-rose-500/10 transition duration-200 flex items-center justify-center space-x-2';
+                btnSubmit.innerHTML = '<i class="fa-solid fa-circle-minus"></i><span>Registrar Retiro</span>';
+            }
+        }
+
+        function handleCapitalFormSubmit(event) {
+            event.preventDefault();
+
+            const type = document.getElementById('input-capital-type').value;
+            const date = document.getElementById('input-capital-date').value;
+            const amount = parseFloat(document.getElementById('input-capital-amount').value);
+            const note = document.getElementById('input-capital-note').value.trim();
+
+            if (!date || isNaN(amount) || amount <= 0) {
+                showToast('Completa fecha y monto con valores válidos.', 'error');
+                return;
+            }
+
+            if (type === 'retiro') {
+                const snapshot = getFinancialSnapshot();
+                if (amount > snapshot.cashBalance) {
+                    showToast(`Retiro rechazado: solo tienes ${formatCurrency(snapshot.cashBalance)} en efectivo (no invertido en cripto).`, 'error');
+                    return;
+                }
+            }
+
+            capitalMovements.push({
+                id: Date.now().toString(),
+                type,
+                date,
+                amount,
+                note
+            });
+            saveCapitalMovements();
+
+            document.getElementById('input-capital-amount').value = '';
+            document.getElementById('input-capital-note').value = '';
+
+            updateDashboard();
+            showToast(type === 'deposito' ? `Capital de ${formatCurrency(amount)} inyectado` : `Retiro de ${formatCurrency(amount)} registrado`, 'success');
+        }
+
+        function deleteCapitalMovement(id) {
+            if (!window.confirm('¿Eliminar este movimiento de capital?')) return;
+            capitalMovements = capitalMovements.filter(m => m.id !== id);
+            saveCapitalMovements();
+            updateDashboard();
+            showToast('Movimiento de capital eliminado', 'info');
+        }
+
+        function renderCapitalSection() {
+            const netMovements = getCapitalMovementsTotal();
+            const totalBase = getTotalCapitalBase();
+
+            document.getElementById('capital-net-movements').textContent = (netMovements >= 0 ? '+' : '') + formatCurrency(netMovements);
+            document.getElementById('capital-net-movements').className = `text-sm font-bold mt-1 ${netMovements >= 0 ? 'text-cyan-400' : 'text-rose-400'}`;
+            document.getElementById('capital-total-base').textContent = formatCurrency(totalBase);
+            document.getElementById('banner-capital-total').textContent = formatCurrency(totalBase) + ' USD';
+
+            document.getElementById('kpi-capital-base').textContent = formatCurrency(totalBase);
+            document.getElementById('kpi-capital-injected').textContent = (netMovements >= 0 ? '+' : '') + formatCurrency(netMovements);
+            document.getElementById('kpi-capital-injected').className = `font-bold ${netMovements >= 0 ? 'text-cyan-400' : 'text-rose-400'}`;
+
+            const tbody = document.getElementById('capital-tbody');
+            const emptyState = document.getElementById('capital-empty-state');
+            tbody.innerHTML = '';
+
+            if (capitalMovements.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            const sorted = [...capitalMovements].sort((a, b) => new Date(b.date) - new Date(a.date));
+            sorted.forEach(m => {
+                const isDeposito = m.type === 'deposito';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2 pr-3 text-slate-400">${m.date}</td>
+                    <td class="py-2 pr-3">
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg ${isDeposito ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                            ${isDeposito ? 'Depósito' : 'Retiro'}
+                        </span>
+                    </td>
+                    <td class="py-2 pr-3 font-mono font-semibold ${isDeposito ? 'text-cyan-400' : 'text-rose-400'}">${isDeposito ? '+' : '-'}${formatCurrency(m.amount)}</td>
+                    <td class="py-2 pr-3 text-slate-400">${m.note || '—'}</td>
+                    <td class="py-2 pr-3 text-right">
+                        <button onclick="deleteCapitalMovement('${m.id}')" class="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition" title="Eliminar">
+                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         function setTxType(type) {
@@ -805,15 +1059,14 @@
             showToast('Transacción eliminada', 'info');
         }
 
-        function updateDashboard() {
-            // Asegurar que las criptomonedas existentes en la base tengan su config
-            transactions.forEach(t => { if (t.asset) getCryptoConfig(t.asset); });
-
-            renderAssetSelectOptions();
-
+        // Calcula el estado financiero completo (saldo, tenencias, P/L) a partir
+        // de las transacciones y el capital total (semilla + inyecciones -
+        // retiros). Se usa tanto en updateDashboard() como para validar un
+        // retiro de capital antes de registrarlo.
+        function getFinancialSnapshot() {
             const sortedTxs = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            let cashBalance = INITIAL_BASE_CAPITAL;
+            let cashBalance = getTotalCapitalBase();
             let realizedPL = 0;
             let totalSellsCount = 0;
 
@@ -879,10 +1132,27 @@
             const unrealizedPL = totalCryptoValUSD - totalUnrealizedCostBasis;
             const unrealizedROI = totalUnrealizedCostBasis > 0 ? ((unrealizedPL / totalUnrealizedCostBasis) * 100) : 0;
 
+            return { sortedTxs, cashBalance, realizedPL, totalSellsCount, assetMetrics, totalCryptoValUSD, netWorth, unrealizedPL, unrealizedROI };
+        }
+
+        function updateDashboard() {
+            // Asegurar que las criptomonedas existentes en la base tengan su config
+            transactions.forEach(t => { if (t.asset) getCryptoConfig(t.asset); });
+
+            renderAssetSelectOptions();
+
+            const {
+                sortedTxs, cashBalance, realizedPL, totalSellsCount,
+                assetMetrics, totalCryptoValUSD, netWorth, unrealizedPL, unrealizedROI
+            } = getFinancialSnapshot();
+
             // Actualizar Tarjetas KPI en DOM
             document.getElementById('kpi-net-worth').textContent = formatCurrency(netWorth);
             document.getElementById('kpi-crypto-val').textContent = formatCurrency(totalCryptoValUSD);
             document.getElementById('kpi-cash-balance').textContent = formatCurrency(cashBalance);
+            const totalBaseForStatus = getTotalCapitalBase();
+            const liquidPct = totalBaseForStatus > 0 ? (cashBalance / totalBaseForStatus) * 100 : 0;
+            document.getElementById('kpi-cash-status').textContent = `${liquidPct.toFixed(0)}% del capital`;
             document.getElementById('kpi-realized-pl').textContent = (realizedPL >= 0 ? '+' : '') + formatCurrency(realizedPL);
             document.getElementById('kpi-realized-pl').className = `text-lg font-bold mt-1 ${realizedPL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             document.getElementById('kpi-realized-count').textContent = `${totalSellsCount} ventas cerradas`;
@@ -894,8 +1164,10 @@
             // Meta: Ganancia Acumulada de $700 USD (de $300 a $1,000). La barra
             // muestra solo la ganancia (realizada + flotante), no el patrimonio
             // total, para poder ver cuánto falta en dólares de utilidad real.
+            // gananciaObjetivo queda FIJA sobre el capital semilla original: inyectar
+            // capital nuevo no debe "adelantar" ni inflar el progreso hacia la meta.
             const gananciaObjetivo = GOAL_TARGET_USD - INITIAL_BASE_CAPITAL;
-            const gananciaAcumulada = netWorth - INITIAL_BASE_CAPITAL;
+            const gananciaAcumulada = netWorth - getTotalCapitalBase();
             const goalPct = Math.min(100, Math.max(0, (gananciaAcumulada / gananciaObjetivo) * 100));
 
             const goalValEl = document.getElementById('goal-current-val');
@@ -936,6 +1208,7 @@
             renderCryptoCards(assetMetrics);
             renderTransactionsTable(sortedTxs, assetMetrics);
             updateMonthlyChart(sortedTxs);
+            renderCapitalSection();
         }
 
         function renderTransactionsTable(sortedTxs, assetMetrics) {
