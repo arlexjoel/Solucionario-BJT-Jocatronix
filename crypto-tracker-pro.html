@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoTracker Pro & Multi-Asset DCA Manager</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        crypto: {
+                            dark: '#0b0f19',
+                            card: '#151d30',
+                            cardBorder: '#1e293b',
+                            accent: '#f7931a',
+                            green: '#10b981',
+                            red: '#ef4444'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #080c14;
+            color: #f3f4f6;
+        }
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .3; }
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f7931a;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen pb-12">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-500/10 p-2 rounded-xl border border-amber-500/20 text-amber-500">
+                    <i class="fa-solid fa-chart-line text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-white leading-none">CryptoTracker Pro <span class="text-xs font-normal text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 ml-2">Multi-Crypto</span></h1>
+                    <span class="text-xs text-slate-400 font-medium">Gestor Multi-Activos DCA: Meta $300 ➔ $1,000 USD</span>
+                </div>
+            </div>
+
+            <!-- Live Price Widget Header -->
+            <div class="flex items-center space-x-3 overflow-x-auto py-2">
+                <div id="live-tickers-container" class="flex items-center space-x-2">
+                    <!-- Dynamic Tickers inserted by JS -->
+                </div>
+                <button onclick="fetchAllLivePrices()" title="Actualizar Precios" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition">
+                    <i class="fa-solid fa-arrows-rotate text-xs" id="refresh-icon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+
+        <!-- Budget & Goal Progress Banner -->
+        <section class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-800 rounded-2xl p-5 relative overflow-hidden shadow-lg">
+            <div class="absolute -right-10 -bottom-10 opacity-5 pointer-events-none">
+                <i class="fa-solid fa-coins text-9xl text-amber-500"></i>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wider text-amber-500 mb-1">Estrategia Activa Multi-Cripto</div>
+                    <h2 class="text-xl font-bold text-white">Objetivo: Escalar de $300 a $1,000 USD</h2>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Reserva Base: <span class="text-slate-200 font-semibold">$300 USD</span> | Enfoque: Dynamic DCA + Toma de Ganancias
+                    </p>
+                </div>
+
+                <!-- Goal Bar -->
+                <div class="md:col-span-2 space-y-2">
+                    <div class="flex justify-between items-end text-sm">
+                        <span class="text-slate-400">Ganancia Acumulada (Realizada + Flotante): <strong id="goal-current-val" class="text-white">$0.00</strong></span>
+                        <span class="text-xs font-bold text-amber-400" id="goal-percentage">0.0% de la meta</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-3.5 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div id="goal-progress-bar" class="bg-gradient-to-r from-amber-500 via-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500 font-medium">
+                        <span>$0 Ganancia</span>
+                        <span>Capital inicial: $300 USD</span>
+                        <span>Meta: +$700 Ganancia (Total $1,000)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI Cards Grid -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+            <!-- KPI 1: Patrimonio Total -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-medium text-slate-400">Patrimonio Total</span>
+                        <h3 id="kpi-net-worth" class="text-lg font-bold text-white mt-1">$0.00</h3>
+                    </div>
+                    <div class="bg-amber-500/10 p-2 rounded-xl border border-amber-500/20 text-amber-400">
+                        <i class="fa-solid fa-vault text-base"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">En Criptomonedas:</span>
+                    <span id="kpi-crypto-val" class="font-bold text-amber-400">$0.00 USD</span>
+                </div>
+            </div>
+
+            <!-- KPI 2: Caja Disponibilidad -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-medium text-slate-400">Efectivo en Caja (USD)</span>
+                        <h3 id="kpi-cash-balance" class="text-lg font-bold text-emerald-400 mt-1">$300.00</h3>
+                    </div>
+                    <div class="bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20 text-emerald-400">
+                        <i class="fa-solid fa-money-bill-wave text-base"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Disponible p/ Compras:</span>
+                    <span id="kpi-cash-status" class="font-bold text-slate-300">100% Líquido</span>
+                </div>
+            </div>
+
+            <!-- KPI 3: Ganancias Realizadas -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-medium text-slate-400">Ganancias Realizadas</span>
+                        <h3 id="kpi-realized-pl" class="text-lg font-bold text-white mt-1">$0.00</h3>
+                    </div>
+                    <div class="bg-indigo-500/10 p-2 rounded-xl border border-indigo-500/20 text-indigo-400">
+                        <i class="fa-solid fa-hand-holding-dollar text-base"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Por Ventas cerradas:</span>
+                    <span id="kpi-realized-count" class="font-bold text-slate-300">0 ventas</span>
+                </div>
+            </div>
+
+            <!-- KPI 4: Rendimiento Latente (Hold) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-medium text-slate-400">P/L Latente (Flotante)</span>
+                        <h3 id="kpi-unrealized-pl" class="text-lg font-bold text-white mt-1">$0.00</h3>
+                    </div>
+                    <div class="bg-blue-500/10 p-2 rounded-xl border border-blue-500/20 text-blue-400">
+                        <i class="fa-solid fa-chart-pie text-base"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">ROI Flotante:</span>
+                    <span id="kpi-unrealized-roi" class="font-bold text-slate-300">0.00%</span>
+                </div>
+            </div>
+
+            <!-- KPI 5: Indicador de Estrategia DCA -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-medium text-slate-400">Señal de Oportunidad</span>
+                        <h3 id="kpi-strategy-signal" class="text-base font-bold text-slate-300 mt-1">Neutral</h3>
+                    </div>
+                    <div class="bg-purple-500/10 p-2 rounded-xl border border-purple-500/20 text-purple-400">
+                        <i class="fa-solid fa-compass text-base"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Acción Recom.:</span>
+                    <span id="kpi-action-hint" class="font-medium text-slate-300">Monitorear</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Per Crypto Breakdown Section -->
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-cubes text-amber-500"></i>
+                    Desglose por Criptoactivo (Fijas: BTC/ETH + Máx 5 Activas)
+                </h3>
+            </div>
+            <div id="crypto-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <!-- Injected dynamically by JS -->
+            </div>
+        </section>
+
+        <!-- Form and Monthly Gains Chart Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Form Panel -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-right-left text-amber-500"></i>
+                        <h3 class="font-bold text-white">Registrar Operación</h3>
+                    </div>
+
+                    <!-- Type Switcher (Buy vs Sell) -->
+                    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button type="button" id="btn-type-buy" onclick="setTxType('buy')" class="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500 text-slate-950 transition">
+                            Compra
+                        </button>
+                        <button type="button" id="btn-type-sell" onclick="setTxType('sell')" class="px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
+                            Venta
+                        </button>
+                    </div>
+                </div>
+
+                <form id="add-tx-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                    <input type="hidden" id="input-tx-type" value="buy">
+
+                    <!-- Selección de Criptomoneda -->
+                    <div>
+                        <label for="input-asset" class="block text-xs font-medium text-slate-400 mb-1">Criptomoneda / Activo</label>
+                        <select id="input-asset" onchange="onAssetChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
+                            <!-- Populated dynamically via JS -->
+                        </select>
+                        <!-- Dynamic Custom Crypto Input -->
+                        <div id="custom-crypto-container" class="hidden mt-2">
+                            <input type="text" id="input-custom-symbol" placeholder="Escribe el símbolo (Ej: SOL, BNB, ADA...)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition uppercase" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); onAssetChange();">
+                            <span class="text-[10px] text-slate-400 mt-1 block">Puedes agregar hasta un máximo de 5 criptomonedas activas.</span>
+                        </div>
+                    </div>
+
+                    <!-- Fecha -->
+                    <div>
+                        <label for="input-date" class="block text-xs font-medium text-slate-400 mb-1">Fecha de Operación</label>
+                        <input type="date" id="input-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
+                    </div>
+
+                    <!-- Cantidad de Monedas -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="input-crypto-amount" class="text-xs font-medium text-slate-400">Cantidad de Monedas</label>
+                            <span id="label-asset-code" class="text-[10px] font-bold text-amber-400">BTC</span>
+                        </div>
+                        <div class="relative">
+                            <input type="number" step="any" min="0.00000001" id="input-crypto-amount" placeholder="Ej: 0.0025" required oninput="calculateFromAmount()" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3 pr-14 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
+                            <span id="badge-asset-symbol" class="absolute right-3 top-2.5 text-xs font-bold text-slate-500">BTC</span>
+                        </div>
+                    </div>
+
+                    <!-- Precio Unitario en USD -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="input-asset-price" class="text-xs font-medium text-slate-400">Precio Unitario ($ USD)</label>
+                            <button type="button" onclick="useCurrentPriceInForm()" class="text-[10px] text-amber-400 hover:underline flex items-center gap-1"><i class="fa-solid fa-bolt"></i> Usar Precio en Vivo</button>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-500">$</span>
+                            <input type="number" step="any" min="0.00001" id="input-asset-price" placeholder="Ej: 75600" required oninput="calculateTotalUsd()" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
+                        </div>
+                    </div>
+
+                    <!-- Monto Total USD -->
+                    <div>
+                        <label id="lbl-cost-usd" for="input-cost-usd" class="block text-xs font-medium text-slate-400 mb-1">Monto Total USD (Invertido)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-500">$</span>
+                            <input type="number" step="any" min="0.01" id="input-cost-usd" placeholder="Ej: 100.00" required oninput="calculateAmountFromTotal()" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition">
+                        </div>
+                    </div>
+
+                    <!-- Botón Guardar -->
+                    <button id="btn-submit-tx" type="submit" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 font-bold py-2.5 rounded-xl shadow-lg shadow-emerald-500/10 transition duration-200 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>Registrar Compra</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Chart Panel: Accumulated Realized Gains -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-amber-500"></i>
+                            Ganancia Acumulada Realizada por Mes ($ USD)
+                        </h3>
+                        <p class="text-xs text-slate-400">Progreso acumulado de utilidad realizada (ventas cerradas) mes a mes. Línea blanca = total acumulado</p>
+                    </div>
+                </div>
+
+                <!-- Canvas Chart Area -->
+                <div class="relative w-full h-72 sm:h-80">
+                    <canvas id="monthlyGainsChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Transaction Table Section -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="p-5 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-amber-500"></i>
+                        Historial General de Operaciones
+                    </h3>
+                    <p class="text-xs text-slate-400">Bitácora de entradas y salidas registradas en la estrategia</p>
+                </div>
+
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <!-- Export Button -->
+                    <button onclick="exportDataJSON()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-download"></i> Exportar
+                    </button>
+                    <!-- Import Button -->
+                    <label class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer transition">
+                        <i class="fa-solid fa-upload"></i> Importar
+                        <input type="file" id="import-file" accept=".json" class="hidden" onchange="importDataJSON(event)">
+                    </label>
+                    <!-- Reset Button -->
+                    <button onclick="confirmResetData()" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-950 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="py-3 px-4">Activo</th>
+                            <th class="py-3 px-4">Tipo</th>
+                            <th class="py-3 px-4">Fecha</th>
+                            <th class="py-3 px-4">Cantidad</th>
+                            <th class="py-3 px-4">Precio Unit.</th>
+                            <th class="py-3 px-4">Total ($ USD)</th>
+                            <th class="py-3 px-4">Estado / Impacto</th>
+                            <th class="py-3 px-4 text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-tbody" class="divide-y divide-slate-800/60 text-slate-200">
+                        <!-- Dynamic Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State Message -->
+            <div id="empty-state" class="hidden py-12 text-center text-slate-500">
+                <i class="fa-solid fa-receipt text-4xl mb-3 opacity-40"></i>
+                <p class="text-sm">No hay transacciones registradas.</p>
+                <p class="text-xs text-slate-600 mt-1">Usa el formulario para añadir tus compras o ventas.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="notification-toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 z-50 bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 pointer-events-none">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message" class="text-sm font-medium">Notificación</span>
+    </div>
+
+    <script>
+        // Supported Crypto Assets Config
+        const CRYPTO_CONFIG = {
+            'BTC': { name: 'Bitcoin', symbol: 'BTCUSDT', coinbaseId: 'BTC-USD', color: '#f7931a', bg: 'rgba(247, 147, 26, 0.4)', icon: 'fa-brands fa-bitcoin' },
+            'ETH': { name: 'Ethereum', symbol: 'ETHUSDT', coinbaseId: 'ETH-USD', color: '#627eea', bg: 'rgba(98, 126, 234, 0.4)', icon: 'fa-brands fa-ethereum' },
+            'SOL': { name: 'Solana', symbol: 'SOLUSDT', coinbaseId: 'SOL-USD', color: '#14f195', bg: 'rgba(20, 241, 149, 0.4)', icon: 'fa-solid fa-bolt' },
+            'BNB': { name: 'Binance Coin', symbol: 'BNBUSDT', coinbaseId: 'BNB-USD', color: '#f3ba2f', bg: 'rgba(243, 186, 47, 0.4)', icon: 'fa-solid fa-coins' },
+            'ADA': { name: 'Cardano', symbol: 'ADAUSDT', coinbaseId: 'ADA-USD', color: '#0033ad', bg: 'rgba(0, 51, 173, 0.4)', icon: 'fa-solid fa-layer-group' },
+            'XRP': { name: 'Ripple', symbol: 'XRPUSDT', coinbaseId: 'XRP-USD', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.4)', icon: 'fa-solid fa-water' }
+        };
+
+        // Live Prices Store (Default Fallbacks)
+        let livePrices = {
+            'BTC': { price: 75600, change: 0.5 },
+            'ETH': { price: 2650, change: -0.2 },
+            'SOL': { price: 155, change: 1.2 },
+            'BNB': { price: 580, change: 0.1 },
+            'ADA': { price: 0.38, change: -0.5 },
+            'XRP': { price: 0.55, change: 0.8 }
+        };
+
+        let transactions = [];
+        let monthlyGainsChart = null;
+
+        const LOCAL_STORAGE_KEY = 'multi_crypto_tracker_txs_v4';
+        const GOAL_TARGET_USD = 1000.00;
+        const INITIAL_BASE_CAPITAL = 300.00;
+        const MAX_ACTIVE_CRYPTOS = 5;
+
+        // Caso exacto del usuario para Agosto (+22 USD de ganancia real)
+        const sampleTransactions = [
+            { id: '1', asset: 'BTC', type: 'buy', date: '2026-08-16', amount: 0.00473843, priceUsd: 63312.10, costUsd: 300.00 },
+            { id: '2', asset: 'BTC', type: 'sell', date: '2026-08-19', amount: 0.00473843, priceUsd: 67954.99, costUsd: 322.00 }
+        ];
+
+        window.onload = function() {
+            document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+
+            loadTransactions();
+            initChart();
+            fetchAllLivePrices();
+
+            setInterval(fetchAllLivePrices, 15000);
+        };
+
+        function loadTransactions() {
+            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (saved) {
+                try {
+                    transactions = JSON.parse(saved);
+                } catch (e) {
+                    transactions = [...sampleTransactions];
+                }
+            } else {
+                transactions = [...sampleTransactions];
+            }
+            updateDashboard();
+        }
+
+        function saveTransactions() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(transactions));
+        }
+
+        function setTxType(type) {
+            document.getElementById('input-tx-type').value = type;
+            const btnBuy = document.getElementById('btn-type-buy');
+            const btnSell = document.getElementById('btn-type-sell');
+            const lblCost = document.getElementById('lbl-cost-usd');
+            const btnSubmit = document.getElementById('btn-submit-tx');
+
+            if (type === 'buy') {
+                btnBuy.className = 'px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500 text-slate-950 transition';
+                btnSell.className = 'px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
+                lblCost.textContent = 'Monto Total USD (Invertido)';
+                btnSubmit.className = 'w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 font-bold py-2.5 rounded-xl shadow-lg shadow-emerald-500/10 transition duration-200 flex items-center justify-center space-x-2';
+                btnSubmit.innerHTML = '<i class="fa-solid fa-plus-circle"></i><span>Registrar Compra</span>';
+            } else {
+                btnSell.className = 'px-3 py-1 text-xs font-bold rounded-lg bg-rose-500 text-white transition';
+                btnBuy.className = 'px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
+                lblCost.textContent = 'Monto Total USD (Recibido)';
+                btnSubmit.className = 'w-full bg-gradient-to-r from-rose-500 to-rose-600 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-rose-500/10 transition duration-200 flex items-center justify-center space-x-2';
+                btnSubmit.innerHTML = '<i class="fa-solid fa-minus-circle"></i><span>Registrar Venta</span>';
+            }
+        }
+
+        // Obtener la lista de activos activos (BTC y ETH siempre + max 3 extras)
+        function getActiveCryptoKeys() {
+            const active = new Set(['BTC', 'ETH']);
+
+            transactions.forEach(t => {
+                if (t.asset && CRYPTO_CONFIG[t.asset]) {
+                    active.add(t.asset);
+                }
+            });
+
+            return Array.from(active).slice(0, MAX_ACTIVE_CRYPTOS);
+        }
+
+        // Consulta Multi-Proveedor de Precios en Vivo
+        async function fetchAllLivePrices() {
+            const refreshIcon = document.getElementById('refresh-icon');
+            if (refreshIcon) refreshIcon.classList.add('fa-spin');
+
+            for (const key in CRYPTO_CONFIG) {
+                const cfg = CRYPTO_CONFIG[key];
+                let fetchedSuccess = false;
+
+                try {
+                    const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${cfg.symbol}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const price = parseFloat(data.lastPrice);
+                        if (!isNaN(price) && price > 0) {
+                            livePrices[key] = {
+                                price: price,
+                                change: parseFloat(data.priceChangePercent) || 0
+                            };
+                            fetchedSuccess = true;
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Binance API query failed for ${key}`);
+                }
+
+                if (!fetchedSuccess) {
+                    try {
+                        const res = await fetch(`https://api.coinbase.com/v2/prices/${cfg.coinbaseId}/spot`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            const price = parseFloat(data.data.amount);
+                            if (!isNaN(price) && price > 0) {
+                                livePrices[key] = {
+                                    price: price,
+                                    change: livePrices[key] ? livePrices[key].change : 0
+                                };
+                                fetchedSuccess = true;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Coinbase API query failed for ${key}`);
+                    }
+                }
+            }
+
+            renderLiveTickers();
+            updateDashboard();
+
+            if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+        }
+
+        function renderLiveTickers() {
+            const container = document.getElementById('live-tickers-container');
+            if (!container) return;
+
+            const activeKeys = getActiveCryptoKeys();
+            container.innerHTML = '';
+
+            activeKeys.forEach(key => {
+                const p = livePrices[key] || { price: 0, change: 0 };
+                const isPos = p.change >= 0;
+
+                const badge = document.createElement('div');
+                badge.className = 'flex items-center space-x-1 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 text-xs shrink-0';
+                badge.innerHTML = `
+                    <span class="font-bold text-slate-300">${key}:</span>
+                    <span class="font-mono text-white">${formatCurrency(p.price)}</span>
+                    <span class="text-[10px] ${isPos ? 'text-emerald-400' : 'text-rose-400'} font-semibold">
+                        ${isPos ? '▲' : '▼'}${Math.abs(p.change).toFixed(1)}%
+                    </span>
+                `;
+                container.appendChild(badge);
+            });
+        }
+
+        function renderCryptoCards(assetMetrics) {
+            const grid = document.getElementById('crypto-cards-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const activeKeys = getActiveCryptoKeys();
+
+            activeKeys.forEach(key => {
+                const conf = CRYPTO_CONFIG[key];
+                const m = assetMetrics[key] || { totalHeld: 0, costBasis: 0, avgBuyPrice: 0 };
+                const liveP = livePrices[key] ? livePrices[key].price : 0;
+                const heldValUSD = m.totalHeld * liveP;
+                const unrealizedPL = m.totalHeld > 0 ? (heldValUSD - m.costBasis) : 0;
+                const roi = m.costBasis > 0 ? ((unrealizedPL / m.costBasis) * 100) : 0;
+
+                const isFixed = (key === 'BTC' || key === 'ETH');
+
+                const card = document.createElement('div');
+                card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-3.5 hover:border-slate-700 transition flex flex-col justify-between';
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="${conf.icon} text-lg" style="color: ${conf.color}"></i>
+                                <span class="font-bold text-sm text-white">${key}</span>
+                                ${isFixed ? '<span class="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded font-semibold border border-amber-500/20">Fija</span>' : '<span class="text-[9px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded font-semibold border border-indigo-500/20">Extra</span>'}
+                            </div>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${roi >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
+                                ${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%
+                            </span>
+                        </div>
+
+                        <div class="space-y-1 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">En Hold:</span>
+                                <span class="font-mono font-semibold text-slate-200">${m.totalHeld.toFixed(8)} ${key}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Precio DCA Prom:</span>
+                                <span class="font-semibold text-amber-400">${formatCurrency(m.avgBuyPrice)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Precio En Vivo:</span>
+                                <span class="font-semibold text-slate-300">${formatCurrency(liveP)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
+                        <span class="text-slate-400">Valor Hoy:</span>
+                        <span class="font-bold text-white">${formatCurrency(heldValUSD)}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Cálculos dinámicos del formulario
+        function calculateFromAmount() {
+            const amount = parseFloat(document.getElementById('input-crypto-amount').value);
+            const price = parseFloat(document.getElementById('input-asset-price').value);
+            if (amount > 0 && price > 0) {
+                document.getElementById('input-cost-usd').value = (amount * price).toFixed(2);
+            }
+        }
+
+        function calculateTotalUsd() {
+            const amount = parseFloat(document.getElementById('input-crypto-amount').value);
+            const price = parseFloat(document.getElementById('input-asset-price').value);
+            const cost = parseFloat(document.getElementById('input-cost-usd').value);
+
+            if (amount > 0 && price > 0) {
+                document.getElementById('input-cost-usd').value = (amount * price).toFixed(2);
+            } else if (cost > 0 && price > 0) {
+                document.getElementById('input-crypto-amount').value = (cost / price).toFixed(8);
+            }
+        }
+
+        function calculateAmountFromTotal() {
+            const cost = parseFloat(document.getElementById('input-cost-usd').value);
+            const price = parseFloat(document.getElementById('input-asset-price').value);
+            if (cost > 0 && price > 0) {
+                document.getElementById('input-crypto-amount').value = (cost / price).toFixed(8);
+            }
+        }
+
+        function renderAssetSelectOptions() {
+            const select = document.getElementById('input-asset');
+            if (!select) return;
+
+            const currentVal = select.value;
+            select.innerHTML = '';
+
+            const baseOptions = [
+                { key: 'BTC', label: 'Bitcoin (BTC)' },
+                { key: 'ETH', label: 'Ethereum (ETH)' }
+            ];
+
+            const activeKeys = getActiveCryptoKeys();
+            const customActiveKeys = activeKeys.filter(k => k !== 'BTC' && k !== 'ETH');
+
+            baseOptions.forEach(opt => {
+                const el = document.createElement('option');
+                el.value = opt.key;
+                el.textContent = opt.label;
+                select.appendChild(el);
+            });
+
+            customActiveKeys.forEach(key => {
+                const el = document.createElement('option');
+                el.value = key;
+                el.textContent = `${key} (Activa)`;
+                select.appendChild(el);
+            });
+
+            if (activeKeys.length < MAX_ACTIVE_CRYPTOS) {
+                const addOpt = document.createElement('option');
+                addOpt.value = 'NEW_CUSTOM';
+                addOpt.textContent = '➕ Agregar otra Cripto (3ª, 4ª o 5ª)...';
+                select.appendChild(addOpt);
+            }
+
+            if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+                select.value = currentVal;
+            } else {
+                select.value = 'BTC';
+            }
+
+            onAssetChange();
+        }
+
+        function getCryptoConfig(assetKey) {
+            const key = (assetKey || 'BTC').toUpperCase();
+            if (CRYPTO_CONFIG[key]) return CRYPTO_CONFIG[key];
+
+            // Generador de configuración para criptomonedas dinámicas ingresadas por el usuario
+            const colorList = ['#14f195', '#f3ba2f', '#0033ad', '#38bdf8', '#a855f7', '#ec4899'];
+            let hash = 0;
+            for (let i = 0; i < key.length; i++) hash = key.charCodeAt(i) + ((hash << 5) - hash);
+            const color = colorList[Math.abs(hash) % colorList.length];
+
+            CRYPTO_CONFIG[key] = {
+                name: key,
+                symbol: `${key}USDT`,
+                coinbaseId: `${key}-USD`,
+                color: color,
+                bg: color + '40',
+                icon: 'fa-solid fa-coins'
+            };
+
+            return CRYPTO_CONFIG[key];
+        }
+
+        function onAssetChange() {
+            const select = document.getElementById('input-asset');
+            const customContainer = document.getElementById('custom-crypto-container');
+            if (!select) return;
+
+            let asset = select.value;
+
+            if (asset === 'NEW_CUSTOM') {
+                customContainer.classList.remove('hidden');
+                const customSymbol = document.getElementById('input-custom-symbol').value.trim().toUpperCase();
+                asset = customSymbol || 'NUEVA';
+            } else {
+                customContainer.classList.add('hidden');
+            }
+
+            getCryptoConfig(asset);
+
+            document.getElementById('label-asset-code').textContent = asset;
+            document.getElementById('badge-asset-symbol').textContent = asset;
+
+            if (asset !== 'NEW_CUSTOM' && asset !== 'NUEVA') {
+                useCurrentPriceInForm();
+            }
+        }
+
+        function useCurrentPriceInForm() {
+            const select = document.getElementById('input-asset');
+            let asset = select ? select.value : 'BTC';
+            if (asset === 'NEW_CUSTOM') {
+                asset = document.getElementById('input-custom-symbol').value.trim().toUpperCase();
+            }
+
+            if (!asset || asset === 'NUEVA') return;
+
+            getCryptoConfig(asset);
+            const liveP = livePrices[asset] ? livePrices[asset].price : 0;
+            if (liveP > 0) {
+                document.getElementById('input-asset-price').value = liveP;
+                calculateTotalUsd();
+                showToast(`Precio de ${asset} aplicado: $${liveP.toLocaleString()}`, 'info');
+            } else {
+                // Forzar búsqueda en API para el nuevo ticker
+                fetchAllLivePrices();
+            }
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            let asset = document.getElementById('input-asset').value;
+            if (asset === 'NEW_CUSTOM') {
+                asset = document.getElementById('input-custom-symbol').value.trim().toUpperCase();
+                if (!asset || asset.length < 2) {
+                    showToast('Por favor escribe el símbolo de la nueva criptomoneda.', 'error');
+                    return;
+                }
+            }
+
+            const type = document.getElementById('input-tx-type').value;
+            const date = document.getElementById('input-date').value;
+            const amount = parseFloat(document.getElementById('input-crypto-amount').value);
+            const priceUsd = parseFloat(document.getElementById('input-asset-price').value);
+            const costUsd = parseFloat(document.getElementById('input-cost-usd').value);
+
+            if (!date || isNaN(amount) || isNaN(priceUsd) || isNaN(costUsd)) {
+                showToast('Completa todos los campos correctamente.', 'error');
+                return;
+            }
+
+            getCryptoConfig(asset);
+
+            const activeKeys = getActiveCryptoKeys();
+            if (!activeKeys.includes(asset) && activeKeys.length >= MAX_ACTIVE_CRYPTOS) {
+                showToast(`Límite de ${MAX_ACTIVE_CRYPTOS} criptomonedas activas alcanzado.`, 'error');
+                return;
+            }
+
+            const newTx = {
+                id: Date.now().toString(),
+                asset,
+                type,
+                date,
+                amount,
+                priceUsd,
+                costUsd
+            };
+
+            transactions.push(newTx);
+            saveTransactions();
+
+            // Limpiar inputs
+            document.getElementById('input-crypto-amount').value = '';
+            document.getElementById('input-cost-usd').value = '';
+            document.getElementById('input-custom-symbol').value = '';
+
+            updateDashboard();
+            showToast(type === 'buy' ? `Compra de ${asset} registrada` : `Venta de ${asset} registrada`, 'success');
+        }
+
+        // Elimina una transacción por id, previa confirmación, y refresca todo el dashboard.
+        function deleteTransaction(id) {
+            if (!window.confirm('¿Seguro que deseas eliminar esta transacción? Esta acción no se puede deshacer.')) {
+                return;
+            }
+            transactions = transactions.filter(t => t.id !== id);
+            saveTransactions();
+            updateDashboard();
+            showToast('Transacción eliminada', 'info');
+        }
+
+        function updateDashboard() {
+            // Asegurar que las criptomonedas existentes en la base tengan su config
+            transactions.forEach(t => { if (t.asset) getCryptoConfig(t.asset); });
+
+            renderAssetSelectOptions();
+
+            const sortedTxs = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let cashBalance = INITIAL_BASE_CAPITAL;
+            let realizedPL = 0;
+            let totalSellsCount = 0;
+
+            const assetMetrics = {};
+            for (const key in CRYPTO_CONFIG) {
+                assetMetrics[key] = {
+                    totalHeld: 0,
+                    costBasis: 0,
+                    avgBuyPrice: 0
+                };
+            }
+
+            // Procesamiento con preservación del Precio Promedio DCA en Ventas
+            sortedTxs.forEach(t => {
+                const asset = t.asset || 'BTC';
+                const amt = parseFloat(t.amount) || 0;
+                const cost = parseFloat(t.costUsd) || 0;
+                const type = t.type || 'buy';
+
+                if (!assetMetrics[asset]) return;
+
+                if (type === 'buy') {
+                    cashBalance -= cost;
+                    assetMetrics[asset].totalHeld += amt;
+                    assetMetrics[asset].costBasis += cost;
+                    assetMetrics[asset].avgBuyPrice = assetMetrics[asset].totalHeld > 0 ? (assetMetrics[asset].costBasis / assetMetrics[asset].totalHeld) : 0;
+                } else if (type === 'sell') {
+                    cashBalance += cost;
+                    totalSellsCount++;
+
+                    if (assetMetrics[asset].totalHeld > 0) {
+                        const currentAvgBuy = assetMetrics[asset].avgBuyPrice;
+                        const soldCostBasis = amt * currentAvgBuy;
+                        const gain = cost - soldCostBasis;
+
+                        realizedPL += gain;
+
+                        assetMetrics[asset].totalHeld = Math.max(0, assetMetrics[asset].totalHeld - amt);
+                        if (assetMetrics[asset].totalHeld === 0) {
+                            assetMetrics[asset].costBasis = 0;
+                            assetMetrics[asset].avgBuyPrice = 0;
+                        } else {
+                            assetMetrics[asset].costBasis = assetMetrics[asset].totalHeld * currentAvgBuy;
+                        }
+                    }
+                }
+            });
+
+            // Valor actual del Portafolio Cripto en Hold
+            let totalCryptoValUSD = 0;
+            let totalUnrealizedCostBasis = 0;
+
+            for (const key in assetMetrics) {
+                const held = assetMetrics[key].totalHeld;
+                const liveP = livePrices[key] ? livePrices[key].price : 0;
+                if (held > 0) {
+                    totalCryptoValUSD += (held * liveP);
+                    totalUnrealizedCostBasis += assetMetrics[key].costBasis;
+                }
+            }
+
+            const netWorth = cashBalance + totalCryptoValUSD;
+            const unrealizedPL = totalCryptoValUSD - totalUnrealizedCostBasis;
+            const unrealizedROI = totalUnrealizedCostBasis > 0 ? ((unrealizedPL / totalUnrealizedCostBasis) * 100) : 0;
+
+            // Actualizar Tarjetas KPI en DOM
+            document.getElementById('kpi-net-worth').textContent = formatCurrency(netWorth);
+            document.getElementById('kpi-crypto-val').textContent = formatCurrency(totalCryptoValUSD);
+            document.getElementById('kpi-cash-balance').textContent = formatCurrency(cashBalance);
+            document.getElementById('kpi-realized-pl').textContent = (realizedPL >= 0 ? '+' : '') + formatCurrency(realizedPL);
+            document.getElementById('kpi-realized-pl').className = `text-lg font-bold mt-1 ${realizedPL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            document.getElementById('kpi-realized-count').textContent = `${totalSellsCount} ventas cerradas`;
+
+            document.getElementById('kpi-unrealized-pl').textContent = (unrealizedPL >= 0 ? '+' : '') + formatCurrency(unrealizedPL);
+            document.getElementById('kpi-unrealized-pl').className = `text-lg font-bold mt-1 ${unrealizedPL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            document.getElementById('kpi-unrealized-roi').textContent = `${unrealizedROI >= 0 ? '+' : ''}${unrealizedROI.toFixed(2)}%`;
+
+            // Meta: Ganancia Acumulada de $700 USD (de $300 a $1,000). La barra
+            // muestra solo la ganancia (realizada + flotante), no el patrimonio
+            // total, para poder ver cuánto falta en dólares de utilidad real.
+            const gananciaObjetivo = GOAL_TARGET_USD - INITIAL_BASE_CAPITAL;
+            const gananciaAcumulada = netWorth - INITIAL_BASE_CAPITAL;
+            const goalPct = Math.min(100, Math.max(0, (gananciaAcumulada / gananciaObjetivo) * 100));
+
+            const goalValEl = document.getElementById('goal-current-val');
+            goalValEl.textContent = (gananciaAcumulada >= 0 ? '+' : '') + formatCurrency(gananciaAcumulada);
+            goalValEl.className = gananciaAcumulada >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
+            document.getElementById('goal-percentage').textContent = `${goalPct.toFixed(1)}% de la meta`;
+            const goalBarEl = document.getElementById('goal-progress-bar');
+            goalBarEl.style.width = `${goalPct}%`;
+            goalBarEl.className = `h-full rounded-full transition-all duration-500 bg-gradient-to-r ${gananciaAcumulada >= 0 ? 'from-amber-500 via-indigo-500 to-emerald-400' : 'from-rose-600 to-rose-400'}`;
+
+            // Señal DCA de Oportunidad para BTC
+            const btcAvg = assetMetrics['BTC'].avgBuyPrice;
+            const btcLive = livePrices['BTC'] ? livePrices['BTC'].price : 0;
+            const signalElem = document.getElementById('kpi-strategy-signal');
+            const hintElem = document.getElementById('kpi-action-hint');
+
+            if (btcAvg > 0 && btcLive > 0) {
+                if (btcLive < btcAvg * 0.96) {
+                    signalElem.textContent = 'Oportunidad DCA';
+                    signalElem.className = 'text-base font-bold text-emerald-400 mt-1';
+                    hintElem.textContent = 'Precio bajo costo medio';
+                } else if (btcLive > btcAvg * 1.12) {
+                    signalElem.textContent = 'Toma de Ganancias';
+                    signalElem.className = 'text-base font-bold text-amber-400 mt-1';
+                    hintElem.textContent = 'Ganancia > 12%';
+                } else {
+                    signalElem.textContent = 'Neutral / Acumulando';
+                    signalElem.className = 'text-base font-bold text-slate-300 mt-1';
+                    hintElem.textContent = 'Sostener estrategia';
+                }
+            } else {
+                signalElem.textContent = 'En Espera';
+                signalElem.className = 'text-base font-bold text-slate-400 mt-1';
+                hintElem.textContent = 'Monitorear mercado';
+            }
+
+            renderCryptoCards(assetMetrics);
+            renderTransactionsTable(sortedTxs, assetMetrics);
+            updateMonthlyChart(sortedTxs);
+        }
+
+        function renderTransactionsTable(sortedTxs, assetMetrics) {
+            const tbody = document.getElementById('transactions-tbody');
+            const emptyState = document.getElementById('empty-state');
+
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (sortedTxs.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            const displayTxs = [...sortedTxs].reverse();
+
+            displayTxs.forEach(t => {
+                const isBuy = t.type === 'buy';
+                const conf = CRYPTO_CONFIG[t.asset] || CRYPTO_CONFIG['BTC'];
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/40 transition';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-semibold text-white flex items-center gap-2">
+                        <i class="${conf.icon}" style="color: ${conf.color}"></i>
+                        <span>${t.asset}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 text-[11px] font-bold rounded-lg ${isBuy ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                            ${isBuy ? 'Compra' : 'Venta'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-400">${t.date}</td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-200">${parseFloat(t.amount).toFixed(8)} ${t.asset}</td>
+                    <td class="py-3 px-4 text-xs text-slate-300">${formatCurrency(t.priceUsd)}</td>
+                    <td class="py-3 px-4 font-bold text-xs ${isBuy ? 'text-slate-200' : 'text-emerald-400'}">${formatCurrency(t.costUsd)}</td>
+                    <td class="py-3 px-4 text-xs text-slate-400">
+                        ${isBuy ? 'Caja ➔ Cripto' : 'Cripto ➔ Caja (Utilidad)'}
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteTransaction('${t.id}')" class="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition" title="Eliminar">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('monthlyGainsChart');
+            if (!ctx) return;
+
+            monthlyGainsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatCurrency(context.raw)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#94a3b8', font: { family: 'Inter', size: 10 } }
+                        },
+                        y: {
+                            grid: { color: '#1e293b' },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: { family: 'Inter', size: 10 },
+                                callback: function(value) { return '$' + value; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico: GANANCIA ACUMULADA (running total mes a mes) de ventas
+        // cerradas, por criptomoneda, más una línea con el total acumulado
+        // combinado de toda la cartera.
+        function updateMonthlyChart(sortedTxs) {
+            if (!monthlyGainsChart) return;
+
+            const monthsSet = new Set();
+            sortedTxs.forEach(t => {
+                if (t.date) monthsSet.add(t.date.substring(0, 7));
+            });
+
+            const months = Array.from(monthsSet).sort();
+
+            const monthlyGainByAsset = {};
+            const assetHeld = {};
+            const assetAvgPrice = {};
+
+            for (const key in CRYPTO_CONFIG) {
+                assetHeld[key] = 0;
+                assetAvgPrice[key] = 0;
+                monthlyGainByAsset[key] = {};
+                months.forEach(m => monthlyGainByAsset[key][m] = 0);
+            }
+
+            sortedTxs.forEach(t => {
+                const asset = t.asset || 'BTC';
+                const month = t.date ? t.date.substring(0, 7) : '';
+                const amt = parseFloat(t.amount) || 0;
+                const cost = parseFloat(t.costUsd) || 0;
+                const type = t.type || 'buy';
+
+                if (!CRYPTO_CONFIG[asset]) return;
+
+                if (type === 'buy') {
+                    const totalCost = (assetHeld[asset] * assetAvgPrice[asset]) + cost;
+                    assetHeld[asset] += amt;
+                    assetAvgPrice[asset] = assetHeld[asset] > 0 ? (totalCost / assetHeld[asset]) : 0;
+                } else if (type === 'sell') {
+                    if (assetHeld[asset] > 0) {
+                        const soldCostBasis = amt * assetAvgPrice[asset];
+                        const gain = cost - soldCostBasis;
+
+                        if (month && monthlyGainByAsset[asset]) {
+                            monthlyGainByAsset[asset][month] = (monthlyGainByAsset[asset][month] || 0) + gain;
+                        }
+
+                        assetHeld[asset] = Math.max(0, assetHeld[asset] - amt);
+                        if (assetHeld[asset] === 0) assetAvgPrice[asset] = 0;
+                    }
+                }
+            });
+
+            // Convierte la ganancia de cada mes en un total ACUMULADO (running
+            // total), para que cada barra muestre la utilidad realizada desde
+            // el inicio hasta ese mes, en vez de solo la utilidad de ese mes.
+            const activeKeys = getActiveCryptoKeys();
+            const cumulativeByAsset = {};
+            activeKeys.forEach(key => {
+                let running = 0;
+                cumulativeByAsset[key] = months.map(m => {
+                    running += (monthlyGainByAsset[key] && monthlyGainByAsset[key][m]) || 0;
+                    return running;
+                });
+            });
+
+            const chartDatasets = [];
+            activeKeys.forEach(key => {
+                const values = cumulativeByAsset[key];
+                const hadAnyOps = values.some(v => Math.abs(v) > 0.001);
+
+                if (hadAnyOps || key === 'BTC' || key === 'ETH') {
+                    chartDatasets.push({
+                        type: 'bar',
+                        label: `${key} (Acumulado $)`,
+                        data: values,
+                        backgroundColor: CRYPTO_CONFIG[key].bg,
+                        borderColor: CRYPTO_CONFIG[key].color,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        order: 2
+                    });
+                }
+            });
+
+            // Total acumulado combinado (todas las criptos), superpuesto como línea.
+            const totalCumulative = months.map((m, idx) =>
+                activeKeys.reduce((sum, key) => sum + (cumulativeByAsset[key] ? cumulativeByAsset[key][idx] : 0), 0)
+            );
+            if (months.length > 0) {
+                chartDatasets.push({
+                    type: 'line',
+                    label: 'Total Acumulado ($)',
+                    data: totalCumulative,
+                    borderColor: '#f8fafc',
+                    backgroundColor: 'rgba(248,250,252,0.08)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#f8fafc',
+                    tension: 0.3,
+                    fill: false,
+                    order: 1
+                });
+            }
+
+            monthlyGainsChart.data.labels = months.length > 0 ? months : ['Sin ventas registradas'];
+            monthlyGainsChart.data.datasets = chartDatasets;
+            monthlyGainsChart.update();
+        }
+
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `crypto_portfolio_dca_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Respaldo JSON descargado.', 'success');
+        }
+
+        function importDataJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        transactions = imported;
+                        saveTransactions();
+                        updateDashboard();
+                        showToast('Datos importados correctamente.', 'success');
+                    } else {
+                        showToast('Formato JSON no válido.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error al leer el archivo.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function confirmResetData() {
+            if (window.confirm("¿Seguro que deseas reiniciar todos los datos a la configuración inicial?")) {
+                transactions = [...sampleTransactions];
+                saveTransactions();
+                updateDashboard();
+                showToast('Datos reiniciados', 'info');
+            }
+        }
+
+        // Notificación tipo "toast" reutilizada por todas las acciones (guardar,
+        // eliminar, exportar/importar, errores de validación, etc).
+        let toastHideTimer = null;
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('notification-toast');
+            const icon = document.getElementById('toast-icon');
+            const msgEl = document.getElementById('toast-message');
+            if (!toast || !icon || !msgEl) return;
+
+            const styles = {
+                success: { icon: 'fa-solid fa-circle-check', color: 'text-emerald-400' },
+                error:   { icon: 'fa-solid fa-circle-exclamation', color: 'text-rose-400' },
+                info:    { icon: 'fa-solid fa-circle-info', color: 'text-amber-400' }
+            };
+            const s = styles[type] || styles.info;
+
+            icon.className = `${s.icon} ${s.color} text-lg`;
+            msgEl.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            clearTimeout(toastHideTimer);
+            toastHideTimer = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(num || 0);
+        }
+    </script>
+</body>
+</html>
