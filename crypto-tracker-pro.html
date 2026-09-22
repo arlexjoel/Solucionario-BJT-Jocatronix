@@ -334,7 +334,7 @@
         </section>
 
         <!-- Form and Monthly Gains Chart Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
             <!-- Form Panel -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
@@ -418,54 +418,50 @@
                 </form>
             </div>
 
-            <!-- Chart Panel: Monthly Realized Gains -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between">
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h3 class="font-bold text-white flex items-center gap-2">
+            <!-- Charts Panel: Monthly + Annual side by side -->
+            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <!-- Monthly Realized Gains Chart -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col">
+                    <div class="mb-3">
+                        <h3 class="font-bold text-white flex items-center gap-2 text-sm">
                             <i class="fa-solid fa-chart-column text-amber-500"></i>
-                            Ganancias Mensuales Realizadas ($ USD)
+                            Ganancias Mensuales ($ USD)
                         </h3>
-                        <p class="text-xs text-slate-400">Utilidad neta cerrada por ventas ejecutadas en cada mes (no acumula meses anteriores). Línea blanca = total del mes</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Utilidad por mes · Línea blanca = total</p>
+                    </div>
+                    <div class="relative w-full h-64">
+                        <canvas id="monthlyGainsChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Canvas Chart Area -->
-                <div class="relative w-full h-72 sm:h-80">
-                    <canvas id="monthlyGainsChart"></canvas>
+                <!-- Annual Gains Chart -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col">
+                    <div class="mb-3">
+                        <h3 class="font-bold text-white flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+                            Ganancias Anuales ($ USD)
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Barras = por año · Línea naranja = acumulado</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Este Año</span>
+                            <div id="annual-current-year" class="text-sm font-bold text-emerald-400 mt-0.5">$0.00</div>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Acumulado</span>
+                            <div id="annual-all-time" class="text-sm font-bold text-amber-400 mt-0.5">$0.00</div>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-48">
+                        <canvas id="annualGainsChart"></canvas>
+                    </div>
                 </div>
+
             </div>
 
         </div>
-
-        <!-- Annual Gains Chart Section -->
-        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-                <div>
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-calendar-check text-emerald-400"></i>
-                        Ganancias Anuales de las Inversiones ($ USD)
-                    </h3>
-                    <p class="text-xs text-slate-400 mt-1">
-                        Barras = utilidad realizada de cada año por separado · Línea naranja = acumulado histórico de toda la estrategia
-                    </p>
-                </div>
-                <div class="grid grid-cols-2 gap-3 shrink-0">
-                    <div class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Este Año</span>
-                        <div id="annual-current-year" class="text-sm font-bold text-emerald-400 mt-1">$0.00</div>
-                    </div>
-                    <div class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Acumulado Histórico</span>
-                        <div id="annual-all-time" class="text-sm font-bold text-amber-400 mt-1">$0.00</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="relative w-full h-64 sm:h-72">
-                <canvas id="annualGainsChart"></canvas>
-            </div>
-        </section>
 
         <!-- Transaction Table Section -->
         <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
@@ -567,10 +563,27 @@
                                               // que inyectar capital nuevo no "adelante" la meta.
         const MAX_ACTIVE_CRYPTOS = 5;
 
-        // Caso exacto del usuario para Agosto (+22 USD de ganancia real)
+        // Compras reales del usuario 2025-2026
         const sampleTransactions = [
-            { id: '1', asset: 'BTC', type: 'buy', date: '2026-08-16', amount: 0.00473843, priceUsd: 63312.10, costUsd: 300.00 },
-            { id: '2', asset: 'BTC', type: 'sell', date: '2026-08-19', amount: 0.00473843, priceUsd: 67954.99, costUsd: 322.00 }
+            { id: 'r1',  asset: 'BTC', type: 'buy', date: '2025-07-07', amount: 0.01197750, priceUsd: 100500.0, costUsd: 1450.00 },
+            { id: 'r2',  asset: 'BTC', type: 'buy', date: '2025-08-03', amount: 0.00481234, priceUsd: 114289.5, costUsd: 550.00  },
+            { id: 'r3',  asset: 'BTC', type: 'buy', date: '2025-08-18', amount: 0.00173561, priceUsd: 115233.3, costUsd: 200.00  },
+            { id: 'r4',  asset: 'BTC', type: 'buy', date: '2025-08-19', amount: 0.00175045, priceUsd: 114256.3, costUsd: 200.00  },
+            { id: 'r5',  asset: 'BTC', type: 'buy', date: '2025-08-29', amount: 0.00181660, priceUsd: 110095.8, costUsd: 200.00  },
+            { id: 'r6',  asset: 'BTC', type: 'buy', date: '2025-09-26', amount: 0.00455539, priceUsd: 109760.1, costUsd: 500.00  },
+            { id: 'r7',  asset: 'BTC', type: 'buy', date: '2025-10-17', amount: 0.00188231, priceUsd: 106252.4, costUsd: 200.00  },
+            { id: 'r8',  asset: 'BTC', type: 'buy', date: '2025-11-13', amount: 0.00404159, priceUsd: 98970.9,  costUsd: 400.00  },
+            { id: 'r9',  asset: 'BTC', type: 'buy', date: '2025-11-14', amount: 0.00314453, priceUsd: 95403.8,  costUsd: 300.00  },
+            { id: 'r10', asset: 'BTC', type: 'buy', date: '2025-11-20', amount: 0.00232010, priceUsd: 86203.2,  costUsd: 200.00  },
+            { id: 'r11', asset: 'BTC', type: 'buy', date: '2025-12-18', amount: 0.00233828, priceUsd: 85533.0,  costUsd: 200.00  },
+            { id: 'r12', asset: 'BTC', type: 'buy', date: '2026-01-30', amount: 0.00119930, priceUsd: 83382.0,  costUsd: 100.00  },
+            { id: 'r13', asset: 'BTC', type: 'buy', date: '2026-05-07', amount: 0.00062350, priceUsd: 80192.5,  costUsd: 50.00   },
+            { id: 'r14', asset: 'BTC', type: 'buy', date: '2026-05-16', amount: 0.00076798, priceUsd: 78127.0,  costUsd: 60.00   },
+            { id: 'r15', asset: 'BTC', type: 'buy', date: '2026-06-02', amount: 0.00286998, priceUsd: 69686.9,  costUsd: 200.00  },
+            { id: 'r16', asset: 'BTC', type: 'buy', date: '2026-06-03', amount: 0.00022281, priceUsd: 67321.9,  costUsd: 15.00   },
+            { id: 'r17', asset: 'BTC', type: 'buy', date: '2026-06-04', amount: 0.00318998, priceUsd: 62696.3,  costUsd: 200.00  },
+            { id: 'r18', asset: 'BTC', type: 'buy', date: '2026-06-30', amount: 0.00169127, priceUsd: 59127.2,  costUsd: 100.00  },
+            { id: 'r19', asset: 'BTC', type: 'buy', date: '2026-07-28', amount: 0.00156880, priceUsd: 63743.0,  costUsd: 100.00  }
         ];
 
         window.onload = function() {
