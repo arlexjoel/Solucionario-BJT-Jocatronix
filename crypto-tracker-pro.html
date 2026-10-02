@@ -126,7 +126,7 @@
         </section>
 
         <!-- KPI Cards Grid -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
 
             <!-- KPI 1: Patrimonio Total -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
@@ -227,6 +227,23 @@
                 <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
                     <span class="text-slate-400">Depositado extra:</span>
                     <span id="kpi-capital-injected" class="font-bold text-cyan-400">$0.00</span>
+                </div>
+            </div>
+
+            <!-- KPI 7: Total Ganancia (Realizada + Flotante) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-medium text-slate-400">Total Ganancia</span>
+                        <h3 id="kpi-total-gain" class="text-lg font-bold text-white mt-1">$0.00</h3>
+                    </div>
+                    <div class="bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20 text-emerald-400">
+                        <i class="fa-solid fa-trophy text-base"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">ROI Global:</span>
+                    <span id="kpi-total-roi" class="font-bold text-slate-300">0.00%</span>
                 </div>
             </div>
 
@@ -332,6 +349,35 @@
                 <!-- Injected dynamically by JS -->
             </div>
         </section>
+
+        <!-- Portfolio Allocation Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Pie: % Inversión por Cripto -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <h3 class="font-bold text-white flex items-center gap-2 mb-1 text-sm">
+                    <i class="fa-solid fa-chart-pie text-amber-500"></i>
+                    Distribución de Inversión por Cripto (%)
+                </h3>
+                <p class="text-xs text-slate-400 mb-4">Porcentaje del capital total invertido por activo</p>
+                <div class="relative w-full h-56">
+                    <canvas id="portfolioPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bar: USDT invertidos por cripto -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <h3 class="font-bold text-white flex items-center gap-2 mb-1 text-sm">
+                    <i class="fa-solid fa-chart-bar text-indigo-400"></i>
+                    Capital Invertido por Cripto ($ USD)
+                </h3>
+                <p class="text-xs text-slate-400 mb-4">Monto total en dólares destinado a cada activo en compras</p>
+                <div class="relative w-full h-56">
+                    <canvas id="portfolioBarChart"></canvas>
+                </div>
+            </div>
+
+        </div>
 
         <!-- Form and Monthly Gains Chart Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -502,7 +548,7 @@
                             <th class="py-3 px-4">Cantidad</th>
                             <th class="py-3 px-4">Precio Unit.</th>
                             <th class="py-3 px-4">Total ($ USD)</th>
-                            <th class="py-3 px-4">Estado / Impacto</th>
+                            <th class="py-3 px-4">ROI / Resultado</th>
                             <th class="py-3 px-4 text-right">Acción</th>
                         </tr>
                     </thead>
@@ -553,6 +599,8 @@
         let capitalMovements = []; // {id, date, type:'deposito'|'retiro', amount, note}
         let monthlyGainsChart = null;
         let annualGainsChart = null;
+        let portfolioPieChart = null;
+        let portfolioBarChart = null;
 
         const LOCAL_STORAGE_KEY = 'multi_crypto_tracker_txs_v4';
         const CAPITAL_STORAGE_KEY = 'multi_crypto_tracker_capital_v1';
@@ -1248,10 +1296,26 @@
                 hintElem.textContent = 'Monitorear mercado';
             }
 
+            // KPI Total Ganancia = realizada + flotante
+            const totalGain = realizedPL + unrealizedPL;
+            const totalInvested = Object.values(assetMetrics).reduce((s, m) => s + m.costBasis, 0);
+            const totalROI = totalInvested > 0 ? ((totalGain / totalInvested) * 100) : 0;
+            const kpiTotalGain = document.getElementById('kpi-total-gain');
+            if (kpiTotalGain) {
+                kpiTotalGain.textContent = (totalGain >= 0 ? '+' : '') + formatCurrency(totalGain);
+                kpiTotalGain.className = `text-lg font-bold mt-1 ${totalGain >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
+            const kpiTotalROI = document.getElementById('kpi-total-roi');
+            if (kpiTotalROI) {
+                kpiTotalROI.textContent = `${totalROI >= 0 ? '+' : ''}${totalROI.toFixed(2)}%`;
+                kpiTotalROI.className = `font-bold ${totalROI >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
+
             renderCryptoCards(assetMetrics);
             renderTransactionsTable(sortedTxs, assetMetrics);
             updateMonthlyChart(sortedTxs);
             updateAnnualChart(sortedTxs);
+            updatePortfolioCharts(sortedTxs);
             renderCapitalSection();
         }
 
@@ -1268,19 +1332,57 @@
             }
             emptyState.classList.add('hidden');
 
+            // Compute per-tx ROI by replaying chronological order
+            const txResult = {};
+            const runHeld = {}, runAvg = {}, runCost = {};
+            sortedTxs.forEach(t => {
+                const asset = t.asset || 'BTC';
+                const amt = parseFloat(t.amount) || 0;
+                const cost = parseFloat(t.costUsd) || 0;
+                if (!runHeld[asset]) { runHeld[asset] = 0; runAvg[asset] = 0; runCost[asset] = 0; }
+
+                if (t.type === 'buy') {
+                    runCost[asset] += cost;
+                    runHeld[asset] += amt;
+                    runAvg[asset] = runHeld[asset] > 0 ? (runCost[asset] / runHeld[asset]) : 0;
+                    txResult[t.id] = { isBuy: true, avgDCA: runAvg[asset] };
+                } else {
+                    const soldBasis = amt * runAvg[asset];
+                    const gain = cost - soldBasis;
+                    const roi = soldBasis > 0 ? (gain / soldBasis) * 100 : 0;
+                    txResult[t.id] = { isBuy: false, gain, roi, soldBasis };
+                    runHeld[asset] = Math.max(0, runHeld[asset] - amt);
+                    runCost[asset] = runHeld[asset] * runAvg[asset];
+                    if (runHeld[asset] === 0) runAvg[asset] = 0;
+                }
+            });
+
             const displayTxs = [...sortedTxs].reverse();
 
             displayTxs.forEach(t => {
                 const isBuy = t.type === 'buy';
                 const conf = CRYPTO_CONFIG[t.asset] || CRYPTO_CONFIG['BTC'];
+                const res = txResult[t.id] || {};
+
+                let roiCell;
+                if (isBuy) {
+                    roiCell = `<div class="text-[10px] text-slate-500">DCA promedio:</div>
+                               <div class="font-semibold text-amber-400 text-xs">${formatCurrency(res.avgDCA || 0)}</div>`;
+                } else {
+                    const gainPos = res.gain >= 0;
+                    roiCell = `<div class="font-bold text-xs ${gainPos ? 'text-emerald-400' : 'text-rose-400'}">${gainPos ? '+' : ''}${formatCurrency(res.gain || 0)}</div>
+                               <div class="text-[10px] font-semibold ${gainPos ? 'text-emerald-500' : 'text-rose-500'}">${gainPos ? '▲' : '▼'} ${Math.abs(res.roi || 0).toFixed(2)}% ROI</div>`;
+                }
 
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-800/40 transition';
 
                 tr.innerHTML = `
-                    <td class="py-3 px-4 font-semibold text-white flex items-center gap-2">
-                        <i class="${conf.icon}" style="color: ${conf.color}"></i>
-                        <span>${t.asset}</span>
+                    <td class="py-3 px-4 font-semibold text-white">
+                        <div class="flex items-center gap-2">
+                            <i class="${conf.icon}" style="color: ${conf.color}"></i>
+                            <span>${t.asset}</span>
+                        </div>
                     </td>
                     <td class="py-3 px-4">
                         <span class="px-2 py-0.5 text-[11px] font-bold rounded-lg ${isBuy ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
@@ -1291,9 +1393,7 @@
                     <td class="py-3 px-4 font-mono text-xs text-slate-200">${parseFloat(t.amount).toFixed(8)} ${t.asset}</td>
                     <td class="py-3 px-4 text-xs text-slate-300">${formatCurrency(t.priceUsd)}</td>
                     <td class="py-3 px-4 font-bold text-xs ${isBuy ? 'text-slate-200' : 'text-emerald-400'}">${formatCurrency(t.costUsd)}</td>
-                    <td class="py-3 px-4 text-xs text-slate-400">
-                        ${isBuy ? 'Caja ➔ Cripto' : 'Cripto ➔ Caja (Utilidad)'}
-                    </td>
+                    <td class="py-3 px-4 text-xs">${roiCell}</td>
                     <td class="py-3 px-4 text-right">
                         <button onclick="deleteTransaction('${t.id}')" class="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition" title="Eliminar">
                             <i class="fa-solid fa-trash-can text-xs"></i>
@@ -1354,6 +1454,85 @@
                     data: { labels: [], datasets: [] },
                     options: buildChartOptions()
                 });
+            }
+
+            const ctxPie = document.getElementById('portfolioPieChart');
+            if (ctxPie) {
+                portfolioPieChart = new Chart(ctxPie, {
+                    type: 'doughnut',
+                    data: { labels: [], datasets: [] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, padding: 12 } },
+                            tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed.toFixed(1)}% ($${(ctx.dataset._rawVals[ctx.dataIndex]||0).toFixed(2)})` } }
+                        }
+                    }
+                });
+            }
+
+            const ctxBar = document.getElementById('portfolioBarChart');
+            if (ctxBar) {
+                portfolioBarChart = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: { labels: [], datasets: [] },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: ctx => `Invertido: $${ctx.parsed.x.toFixed(2)}` } }
+                        },
+                        scales: {
+                            x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 10 }, callback: v => '$'+v } },
+                            y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updatePortfolioCharts(sortedTxs) {
+            const investedByCrypto = {};
+            sortedTxs.forEach(t => {
+                if (t.type !== 'buy') return;
+                const asset = t.asset || 'BTC';
+                investedByCrypto[asset] = (investedByCrypto[asset] || 0) + (parseFloat(t.costUsd) || 0);
+            });
+
+            const labels = Object.keys(investedByCrypto);
+            const values = labels.map(k => investedByCrypto[k]);
+            const total = values.reduce((a, b) => a + b, 0);
+            const pcts = values.map(v => total > 0 ? (v / total) * 100 : 0);
+            const colors = labels.map(k => (CRYPTO_CONFIG[k] && CRYPTO_CONFIG[k].color) || '#94a3b8');
+            const bgs = labels.map(k => (CRYPTO_CONFIG[k] && CRYPTO_CONFIG[k].bg) || 'rgba(148,163,184,0.4)');
+
+            if (portfolioPieChart) {
+                portfolioPieChart.data.labels = labels;
+                portfolioPieChart.data.datasets = [{
+                    data: pcts,
+                    _rawVals: values,
+                    backgroundColor: bgs,
+                    borderColor: colors,
+                    borderWidth: 2,
+                    hoverOffset: 6
+                }];
+                portfolioPieChart.update();
+            }
+
+            if (portfolioBarChart) {
+                portfolioBarChart.data.labels = labels;
+                portfolioBarChart.data.datasets = [{
+                    label: 'Invertido ($ USD)',
+                    data: values,
+                    backgroundColor: bgs,
+                    borderColor: colors,
+                    borderWidth: 2,
+                    borderRadius: 6
+                }];
+                portfolioBarChart.update();
             }
         }
 
