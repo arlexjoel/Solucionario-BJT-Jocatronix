@@ -357,9 +357,9 @@
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
                 <h3 class="font-bold text-white flex items-center gap-2 mb-1 text-sm">
                     <i class="fa-solid fa-chart-pie text-amber-500"></i>
-                    Distribución de Inversión por Cripto (%)
+                    Distribución del Patrimonio por Cripto (%)
                 </h3>
-                <p class="text-xs text-slate-400 mb-4">Porcentaje del capital total invertido por activo</p>
+                <p class="text-xs text-slate-400 mb-4">Porcentaje del valor de mercado actual del portafolio por activo</p>
                 <div class="relative w-full h-56">
                     <canvas id="portfolioPieChart"></canvas>
                 </div>
@@ -369,9 +369,9 @@
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
                 <h3 class="font-bold text-white flex items-center gap-2 mb-1 text-sm">
                     <i class="fa-solid fa-chart-bar text-indigo-400"></i>
-                    Capital Invertido por Cripto ($ USD)
+                    Valor de Mercado por Cripto ($ USD)
                 </h3>
-                <p class="text-xs text-slate-400 mb-4">Monto total en dólares destinado a cada activo en compras</p>
+                <p class="text-xs text-slate-400 mb-4">Valor actual a precio de mercado de cada activo en hold</p>
                 <div class="relative w-full h-56">
                     <canvas id="portfolioBarChart"></canvas>
                 </div>
@@ -1315,7 +1315,7 @@
             renderTransactionsTable(sortedTxs, assetMetrics);
             updateMonthlyChart(sortedTxs);
             updateAnnualChart(sortedTxs);
-            updatePortfolioCharts(sortedTxs);
+            updatePortfolioCharts(assetMetrics);
             renderCapitalSection();
         }
 
@@ -1494,16 +1494,20 @@
             }
         }
 
-        function updatePortfolioCharts(sortedTxs) {
-            const investedByCrypto = {};
-            sortedTxs.forEach(t => {
-                if (t.type !== 'buy') return;
-                const asset = t.asset || 'BTC';
-                investedByCrypto[asset] = (investedByCrypto[asset] || 0) + (parseFloat(t.costUsd) || 0);
-            });
+        // Gráficos de distribución basados en VALOR DE MERCADO actual (patrimonio),
+        // no en costo histórico: refleja cuánto vale cada cripto HOY.
+        function updatePortfolioCharts(assetMetrics) {
+            const marketValByCrypto = {};
+            for (const key in assetMetrics) {
+                const held = assetMetrics[key].totalHeld;
+                if (held <= 0) continue;
+                const liveP = livePrices[key] ? livePrices[key].price : 0;
+                const mktVal = held * liveP;
+                if (mktVal > 0) marketValByCrypto[key] = mktVal;
+            }
 
-            const labels = Object.keys(investedByCrypto);
-            const values = labels.map(k => investedByCrypto[k]);
+            const labels = Object.keys(marketValByCrypto);
+            const values = labels.map(k => marketValByCrypto[k]);
             const total = values.reduce((a, b) => a + b, 0);
             const pcts = values.map(v => total > 0 ? (v / total) * 100 : 0);
             const colors = labels.map(k => (CRYPTO_CONFIG[k] && CRYPTO_CONFIG[k].color) || '#94a3b8');
@@ -1525,7 +1529,7 @@
             if (portfolioBarChart) {
                 portfolioBarChart.data.labels = labels;
                 portfolioBarChart.data.datasets = [{
-                    label: 'Invertido ($ USD)',
+                    label: 'Valor de Mercado ($ USD)',
                     data: values,
                     backgroundColor: bgs,
                     borderColor: colors,
