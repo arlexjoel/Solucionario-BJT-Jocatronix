@@ -249,6 +249,9 @@
 
         </section>
 
+        <!-- Alerts Strip (take-profit / DCA opportunity) -->
+        <div id="alerts-container" class="hidden space-y-2"></div>
+
         <!-- Capital / Fondos Section: inject or withdraw capital (separate from trading P/L) -->
         <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-3 mb-4">
@@ -350,6 +353,86 @@
             </div>
         </section>
 
+        <!-- Historical BTC Price Chart + Scenario Calculator -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Historical BTC Price (90 days) with buy markers -->
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div>
+                        <h3 class="font-bold text-white flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-chart-line text-amber-500"></i>
+                            Histórico BTC – Últimos 90 días
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Precio de mercado · <span class="text-emerald-400">● Tus compras</span> · <span class="text-indigo-400">— DCA promedio</span></p>
+                    </div>
+                    <button onclick="fetchPriceHistory()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition shrink-0">
+                        <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+                    </button>
+                </div>
+                <div class="relative w-full h-72">
+                    <canvas id="priceHistoryChart"></canvas>
+                </div>
+                <p id="price-history-status" class="text-center text-xs text-slate-500 mt-2">Cargando datos históricos…</p>
+            </div>
+
+            <!-- Scenario Calculator -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col">
+                <h3 class="font-bold text-white flex items-center gap-2 text-sm mb-1">
+                    <i class="fa-solid fa-calculator text-purple-400"></i>
+                    Calculadora de Escenarios
+                </h3>
+                <p class="text-xs text-slate-400 mb-4">¿Y si BTC llega a…?</p>
+
+                <div class="space-y-3 flex-1">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Precio objetivo BTC ($ USD)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-500">$</span>
+                            <input type="number" id="scenario-btc-price" placeholder="Ej: 120000" oninput="calculateScenario()"
+                                class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition">
+                        </div>
+                    </div>
+
+                    <div id="scenario-results" class="hidden space-y-2 mt-2">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-400">Patrimonio proyectado:</span>
+                                <span id="sc-net-worth" class="font-bold text-white">—</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-400">Ganancia total:</span>
+                                <span id="sc-total-gain" class="font-bold text-emerald-400">—</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-400">ROI Global:</span>
+                                <span id="sc-roi" class="font-bold text-amber-400">—</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-400">% hacia la meta ($700):</span>
+                                <span id="sc-goal-pct" class="font-bold text-indigo-400">—</span>
+                            </div>
+                        </div>
+                        <div id="sc-alert" class="hidden text-center text-xs font-bold py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            🎯 ¡Meta alcanzada en este escenario!
+                        </div>
+                    </div>
+
+                    <div class="mt-auto pt-3 border-t border-slate-800 space-y-1">
+                        <div class="text-[10px] text-slate-500 uppercase font-semibold">Precios rápidos</div>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="setScenario(80000)"  class="text-[10px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2 py-1 rounded-lg transition">$80k</button>
+                            <button onclick="setScenario(100000)" class="text-[10px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2 py-1 rounded-lg transition">$100k</button>
+                            <button onclick="setScenario(120000)" class="text-[10px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2 py-1 rounded-lg transition">$120k</button>
+                            <button onclick="setScenario(150000)" class="text-[10px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2 py-1 rounded-lg transition">$150k</button>
+                            <button onclick="setScenario(200000)" class="text-[10px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 px-2 py-1 rounded-lg transition">$200k</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
         <!-- Portfolio Allocation Charts -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -357,9 +440,9 @@
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
                 <h3 class="font-bold text-white flex items-center gap-2 mb-1 text-sm">
                     <i class="fa-solid fa-chart-pie text-amber-500"></i>
-                    Distribución del Patrimonio por Cripto (%)
+                    Distribución de Inversión por Cripto (%)
                 </h3>
-                <p class="text-xs text-slate-400 mb-4">Porcentaje del valor de mercado actual del portafolio por activo</p>
+                <p class="text-xs text-slate-400 mb-4">Porcentaje del capital total <strong class="text-slate-300">invertido</strong> en cada activo (costo de compras)</p>
                 <div class="relative w-full h-56">
                     <canvas id="portfolioPieChart"></canvas>
                 </div>
@@ -369,9 +452,9 @@
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
                 <h3 class="font-bold text-white flex items-center gap-2 mb-1 text-sm">
                     <i class="fa-solid fa-chart-bar text-indigo-400"></i>
-                    Valor de Mercado por Cripto ($ USD)
+                    Capital Invertido por Cripto ($ USD)
                 </h3>
-                <p class="text-xs text-slate-400 mb-4">Valor actual a precio de mercado de cada activo en hold</p>
+                <p class="text-xs text-slate-400 mb-4">Monto total en dólares <strong class="text-slate-300">invertido</strong> en compras por activo</p>
                 <div class="relative w-full h-56">
                     <canvas id="portfolioBarChart"></canvas>
                 </div>
@@ -601,6 +684,8 @@
         let annualGainsChart = null;
         let portfolioPieChart = null;
         let portfolioBarChart = null;
+        let priceHistoryChart = null;
+        let btcPriceHistory = [];
 
         const LOCAL_STORAGE_KEY = 'multi_crypto_tracker_txs_v4';
         const CAPITAL_STORAGE_KEY = 'multi_crypto_tracker_capital_v1';
@@ -641,7 +726,9 @@
             loadCapitalMovements();
             loadTransactions();
             initChart();
+            initPriceHistoryChart();
             fetchAllLivePrices();
+            fetchPriceHistory();
 
             setInterval(fetchAllLivePrices, 15000);
         };
@@ -937,10 +1024,29 @@
                 const card = document.createElement('div');
                 card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-3.5 hover:border-slate-700 transition flex flex-col justify-between';
 
+                // Semaphore: distance from DCA avg
+                const diffPct = m.avgBuyPrice > 0 && liveP > 0 ? ((liveP - m.avgBuyPrice) / m.avgBuyPrice) * 100 : null;
+                let semaphore = '', alertBadge = '';
+                if (diffPct !== null) {
+                    if (diffPct >= 12) {
+                        semaphore = '<span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block shrink-0" title="Tomar ganancias"></span>';
+                        alertBadge = '<div class="mt-2 text-center text-[10px] font-bold py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">🔔 TOMAR GANANCIAS</div>';
+                    } else if (diffPct >= 0) {
+                        semaphore = '<span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shrink-0" title="En ganancia"></span>';
+                    } else if (diffPct >= -4) {
+                        semaphore = '<span class="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block shrink-0" title="Cerca del DCA"></span>';
+                    } else {
+                        semaphore = '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shrink-0" title="Bajo DCA – oportunidad"></span>';
+                        alertBadge = '<div class="mt-2 text-center text-[10px] font-bold py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">💡 OPORTUNIDAD DCA</div>';
+                    }
+                }
+                const diffLabel = diffPct !== null ? `${diffPct >= 0 ? '+' : ''}${diffPct.toFixed(1)}% vs DCA` : '—';
+
                 card.innerHTML = `
                     <div>
                         <div class="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-2">
                             <div class="flex items-center space-x-2">
+                                ${semaphore}
                                 <i class="${conf.icon} text-lg" style="color: ${conf.color}"></i>
                                 <span class="font-bold text-sm text-white">${key}</span>
                                 ${isFixed ? '<span class="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded font-semibold border border-amber-500/20">Fija</span>' : '<span class="text-[9px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded font-semibold border border-indigo-500/20">Extra</span>'}
@@ -955,15 +1061,20 @@
                                 <span class="text-slate-400">En Hold:</span>
                                 <span class="font-mono font-semibold text-slate-200">${m.totalHeld.toFixed(8)} ${key}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-slate-400">Precio DCA Prom:</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">Entrada DCA:</span>
                                 <span class="font-semibold text-amber-400">${formatCurrency(m.avgBuyPrice)}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-slate-400">Precio En Vivo:</span>
-                                <span class="font-semibold text-slate-300">${formatCurrency(liveP)}</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">Precio en Vivo:</span>
+                                <span class="font-semibold text-slate-200">${formatCurrency(liveP)}</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-0.5">
+                                <span class="text-slate-500 text-[10px]">vs entrada:</span>
+                                <span class="text-[10px] font-bold ${diffPct !== null && diffPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${diffLabel}</span>
                             </div>
                         </div>
+                        ${alertBadge}
                     </div>
 
                     <div class="mt-3 pt-2 border-t border-slate-800/80 flex justify-between items-center text-xs">
@@ -1311,11 +1422,13 @@
                 kpiTotalROI.className = `font-bold ${totalROI >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             }
 
+            renderAlerts(assetMetrics);
             renderCryptoCards(assetMetrics);
             renderTransactionsTable(sortedTxs, assetMetrics);
             updateMonthlyChart(sortedTxs);
             updateAnnualChart(sortedTxs);
-            updatePortfolioCharts(assetMetrics);
+            updatePortfolioCharts(sortedTxs);
+            updatePriceHistoryChart();
             renderCapitalSection();
         }
 
@@ -1494,20 +1607,218 @@
             }
         }
 
-        // Gráficos de distribución basados en VALOR DE MERCADO actual (patrimonio),
-        // no en costo histórico: refleja cuánto vale cada cripto HOY.
-        function updatePortfolioCharts(assetMetrics) {
-            const marketValByCrypto = {};
-            for (const key in assetMetrics) {
-                const held = assetMetrics[key].totalHeld;
-                if (held <= 0) continue;
-                const liveP = livePrices[key] ? livePrices[key].price : 0;
-                const mktVal = held * liveP;
-                if (mktVal > 0) marketValByCrypto[key] = mktVal;
+        function initPriceHistoryChart() {
+            const ctx = document.getElementById('priceHistoryChart');
+            if (!ctx) return;
+            priceHistoryChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, padding: 12 } },
+                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}` } }
+                    },
+                    scales: {
+                        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 9 }, maxTicksLimit: 10 } },
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => '$' + (v/1000).toFixed(0) + 'k' } }
+                    }
+                }
+            });
+        }
+
+        async function fetchPriceHistory() {
+            const statusEl = document.getElementById('price-history-status');
+            if (statusEl) statusEl.textContent = 'Cargando datos…';
+
+            let success = false;
+
+            // Try Binance klines (90 daily candles)
+            try {
+                const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=91');
+                if (res.ok) {
+                    const data = await res.json();
+                    btcPriceHistory = data.map(k => ({
+                        date: new Date(k[0]).toISOString().split('T')[0],
+                        price: parseFloat(k[4]) // close price
+                    }));
+                    success = true;
+                }
+            } catch(e) { console.warn('Binance klines failed'); }
+
+            // Fallback: CoinGecko
+            if (!success) {
+                try {
+                    const res = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=90&interval=daily');
+                    if (res.ok) {
+                        const data = await res.json();
+                        btcPriceHistory = data.prices.map(([ts, price]) => ({
+                            date: new Date(ts).toISOString().split('T')[0],
+                            price
+                        }));
+                        success = true;
+                    }
+                } catch(e) { console.warn('CoinGecko history failed'); }
             }
 
-            const labels = Object.keys(marketValByCrypto);
-            const values = labels.map(k => marketValByCrypto[k]);
+            if (success && btcPriceHistory.length > 0) {
+                updatePriceHistoryChart();
+                if (statusEl) statusEl.textContent = `${btcPriceHistory.length} días cargados · fuente: Binance`;
+            } else {
+                if (statusEl) statusEl.textContent = 'No se pudo cargar el historial. Verifica tu conexión.';
+            }
+        }
+
+        function updatePriceHistoryChart() {
+            if (!priceHistoryChart || btcPriceHistory.length === 0) return;
+
+            const labels = btcPriceHistory.map(d => d.date);
+            const prices = btcPriceHistory.map(d => d.price);
+            const histStart = labels[0];
+
+            // Buy markers: null except on dates matching a BTC buy
+            const buyData = labels.map(() => null);
+            const btcBuys = transactions.filter(t => t.asset === 'BTC' && t.type === 'buy' && t.date >= histStart);
+            btcBuys.forEach(t => {
+                let idx = labels.indexOf(t.date);
+                if (idx < 0) idx = labels.findIndex(d => d > t.date) - 1; // nearest prior day
+                if (idx >= 0) buyData[idx] = parseFloat(t.priceUsd);
+            });
+
+            // DCA avg line (flat)
+            const btcMetrics = getFinancialSnapshot().assetMetrics['BTC'];
+            const avgLine = btcMetrics && btcMetrics.avgBuyPrice > 0
+                ? labels.map(() => btcMetrics.avgBuyPrice) : [];
+
+            priceHistoryChart.data.labels = labels;
+            priceHistoryChart.data.datasets = [
+                {
+                    label: 'Precio BTC',
+                    data: prices,
+                    borderColor: '#f7931a',
+                    backgroundColor: 'rgba(247,147,26,0.06)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: true,
+                    tension: 0.3,
+                    order: 3
+                },
+                ...(avgLine.length > 0 ? [{
+                    label: 'DCA Promedio',
+                    data: avgLine,
+                    borderColor: '#818cf8',
+                    backgroundColor: 'transparent',
+                    borderWidth: 1.5,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 2
+                }] : []),
+                {
+                    label: 'Mis Compras',
+                    data: buyData,
+                    borderColor: '#ffffff',
+                    backgroundColor: '#10b981',
+                    borderWidth: 2,
+                    pointRadius: 7,
+                    pointHoverRadius: 9,
+                    showLine: false,
+                    order: 1
+                }
+            ];
+            priceHistoryChart.update();
+        }
+
+        function renderAlerts(assetMetrics) {
+            const container = document.getElementById('alerts-container');
+            if (!container) return;
+            const alerts = [];
+
+            for (const key in assetMetrics) {
+                const m = assetMetrics[key];
+                if (m.totalHeld <= 0 || m.avgBuyPrice <= 0) continue;
+                const liveP = livePrices[key] ? livePrices[key].price : 0;
+                if (!liveP) continue;
+                const diffPct = ((liveP - m.avgBuyPrice) / m.avgBuyPrice) * 100;
+
+                if (diffPct >= 12) {
+                    alerts.push({ type: 'take-profit', key, diffPct,
+                        msg: `🔔 <strong>${key}</strong>: precio en vivo es <strong>+${diffPct.toFixed(1)}%</strong> sobre tu DCA ($${m.avgBuyPrice.toFixed(0)}) — considera tomar ganancias parciales`,
+                        cls: 'bg-amber-500/10 border-amber-500/30 text-amber-300' });
+                } else if (diffPct <= -4) {
+                    alerts.push({ type: 'dca', key, diffPct,
+                        msg: `💡 <strong>${key}</strong>: precio en vivo es <strong>${diffPct.toFixed(1)}%</strong> bajo tu DCA ($${m.avgBuyPrice.toFixed(0)}) — oportunidad de promediar a la baja`,
+                        cls: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' });
+                }
+            }
+
+            if (alerts.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            container.innerHTML = alerts.map(a =>
+                `<div class="flex items-start gap-3 border rounded-xl px-4 py-3 text-sm ${a.cls}">
+                    <i class="fa-solid ${a.type === 'take-profit' ? 'fa-bell text-amber-400' : 'fa-lightbulb text-emerald-400'} mt-0.5 shrink-0"></i>
+                    <span>${a.msg}</span>
+                 </div>`
+            ).join('');
+        }
+
+        function setScenario(price) {
+            document.getElementById('scenario-btc-price').value = price;
+            calculateScenario();
+        }
+
+        function calculateScenario() {
+            const targetPrice = parseFloat(document.getElementById('scenario-btc-price').value);
+            const resultsEl = document.getElementById('scenario-results');
+            if (!resultsEl) return;
+            if (isNaN(targetPrice) || targetPrice <= 0) { resultsEl.classList.add('hidden'); return; }
+
+            const snap = getFinancialSnapshot();
+            // Recalculate netWorth with the hypothetical BTC price
+            let projectedCryptoVal = 0;
+            for (const key in snap.assetMetrics) {
+                const held = snap.assetMetrics[key].totalHeld;
+                if (held <= 0) continue;
+                const price = key === 'BTC' ? targetPrice : (livePrices[key] ? livePrices[key].price : 0);
+                projectedCryptoVal += held * price;
+            }
+            const projectedNetWorth = snap.cashBalance + projectedCryptoVal;
+            const projectedGain = projectedNetWorth - getTotalCapitalBase();
+            const totalInvested = Object.values(snap.assetMetrics).reduce((s, m) => s + m.costBasis, 0);
+            const projectedROI = totalInvested > 0 ? (projectedGain / totalInvested) * 100 : 0;
+            const goalPct = Math.min((projectedGain / (GOAL_TARGET_USD - INITIAL_BASE_CAPITAL)) * 100, 999);
+            const goalReached = projectedGain >= (GOAL_TARGET_USD - INITIAL_BASE_CAPITAL);
+
+            document.getElementById('sc-net-worth').textContent = formatCurrency(projectedNetWorth);
+            const gainEl = document.getElementById('sc-total-gain');
+            gainEl.textContent = (projectedGain >= 0 ? '+' : '') + formatCurrency(projectedGain);
+            gainEl.className = `font-bold ${projectedGain >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            document.getElementById('sc-roi').textContent = `${projectedROI >= 0 ? '+' : ''}${projectedROI.toFixed(2)}%`;
+            document.getElementById('sc-goal-pct').textContent = `${goalPct.toFixed(1)}%`;
+
+            const alertEl = document.getElementById('sc-alert');
+            if (goalReached) alertEl.classList.remove('hidden'); else alertEl.classList.add('hidden');
+
+            resultsEl.classList.remove('hidden');
+        }
+
+        // Gráficos de distribución basados en COSTO INVERTIDO histórico:
+        // muestra cuánto % del capital total pusiste en cada cripto.
+        function updatePortfolioCharts(sortedTxs) {
+            const investedByCrypto = {};
+            sortedTxs.forEach(t => {
+                if (t.type !== 'buy') return;
+                const asset = t.asset || 'BTC';
+                investedByCrypto[asset] = (investedByCrypto[asset] || 0) + (parseFloat(t.costUsd) || 0);
+            });
+
+            const labels = Object.keys(investedByCrypto);
+            const values = labels.map(k => investedByCrypto[k]);
             const total = values.reduce((a, b) => a + b, 0);
             const pcts = values.map(v => total > 0 ? (v / total) * 100 : 0);
             const colors = labels.map(k => (CRYPTO_CONFIG[k] && CRYPTO_CONFIG[k].color) || '#94a3b8');
@@ -1529,7 +1840,7 @@
             if (portfolioBarChart) {
                 portfolioBarChart.data.labels = labels;
                 portfolioBarChart.data.datasets = [{
-                    label: 'Valor de Mercado ($ USD)',
+                    label: 'Invertido ($ USD)',
                     data: values,
                     backgroundColor: bgs,
                     borderColor: colors,
